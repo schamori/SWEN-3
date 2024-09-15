@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  webapplication-swen3:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    container_name: webapplication-swen3
+    ports:
+      - "8081:80" # PaperlessRest
+    volumes:
+      - ./:/app # Mount das Projektverzeichnis in den Container
+    working_dir: /app
+    command: ["dotnet", "run", "--urls", "http://0.0.0.0:80"] # Starte die Anwendung
+    networks:
+      - swen_network
+
+networks:
+  swen_network:
+    driver: bridge
