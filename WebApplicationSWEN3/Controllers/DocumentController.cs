@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace WebApplicationSWEN3.Controllers
 {
     [ApiController]
-    [Route("/Document")]
+    [Route("/")]
     public class DocumentController : Controller
     {
         private readonly DocumentContext _context;
@@ -23,7 +23,17 @@ namespace WebApplicationSWEN3.Controllers
         {
             if (_context.DocumentItems.Count() == 0)
             {
-                return NotFound("No Documents in Database");
+                // Hardcode 5 documents if no documents found
+                var documents = new List<DocumentItem>
+                {
+                    new DocumentItem { Id = 1, Title = "Document 1", Content = "Lorem ipsum dolor sit amet." },
+                    new DocumentItem { Id = 2, Title = "Document 2", Content = "Consectetur adipiscing elit." },
+                    new DocumentItem { Id = 3, Title = "Document 3", Content = "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." },
+                    new DocumentItem { Id = 4, Title = "Document 4", Content = "Ut enim ad minim veniam." },
+                    new DocumentItem { Id = 5, Title = "Document 5", Content = "Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat." }
+                };
+
+                return Ok(documents);
             }
             return Ok(_context.DocumentItems);
         }
