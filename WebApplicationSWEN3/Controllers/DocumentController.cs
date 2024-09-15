@@ -23,7 +23,7 @@ namespace WebApplicationSWEN3.Controllers
         {
             if (_context.DocumentItems.Count() == 0)
             {
-                return NotFound();
+                return NotFound("No Documents in Database");
             }
             return Ok(_context.DocumentItems);
         }
@@ -37,7 +37,7 @@ namespace WebApplicationSWEN3.Controllers
             var document = _context.DocumentItems.Find(id);
             if (document == null)
             {
-                return NotFound();
+                return NotFound($"Document with Id {id} not found!");
             }
             return Ok(document);
         }

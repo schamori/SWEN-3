@@ -16,13 +16,6 @@ public class DocumentContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Add hardcoded entry
-        modelBuilder.Entity<DocumentItem>().HasData(new DocumentItem
-        {
-            Id = 1,
-            Title = "Hardcoded Document",
-            Content = "This is a hardcoded document entry"
-        });
-
+       
     }
 }
