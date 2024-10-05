@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace WebApplicationSWEN3.Controllers
 {
     [ApiController]
-    [Route("/")]
+    [Route("/api")]
     public class DocumentController : Controller
     {
         private readonly DocumentContext _context;

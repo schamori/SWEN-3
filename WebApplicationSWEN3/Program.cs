@@ -34,7 +34,21 @@ namespace WebApplicationSWEN3
 
             app.UseAuthorization();
 
+            app.UseDefaultFiles(); // Add this line to serve index.html as the default file
+
+            app.UseStaticFiles(); // Add this line to serve static files from wwwroot
+
             app.MapControllers();
+            app.Use(async (context, next) =>
+            {
+                // If the request path is not for an API endpoint, redirect to index.html
+                if (!context.Request.Path.StartsWithSegments("/api"))
+                {
+                    context.Request.Path = "/index.html";
+                }
+
+                await next();
+            });
 
             app.Run();
 
