@@ -5,5 +5,25 @@
 </head>
 <body>
     <h1>Hello, World!</h1>
+    <button id="fetchDataButton">Fetch Data from API</button>
+    <div id="apiResponse"></div>
+
+    <script>document.getElementById('fetchDataButton').addEventListener('click', () => {
+            // Make a GET request to the API endpoint
+            fetch('/api/document')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json(); // Assuming the response is JSON
+                })
+                .then(data => {
+                    // Display the data in the <div> element
+                    document.getElementById('apiResponse').innerText = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        });</script>
 </body>
 </html>
