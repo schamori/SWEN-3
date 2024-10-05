@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using sws.Models;
 
-
 namespace WebApplicationSWEN3
 {
     public class Program
@@ -12,9 +11,19 @@ namespace WebApplicationSWEN3
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
 
-
             // Add services to the container.
             builder.Services.AddControllers();
+
+            // Configure CORS to allow requests from all origins
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                });
+            });
 
             // Configure in-memory database
             builder.Services.AddDbContext<DocumentContext>(options =>
@@ -24,34 +33,23 @@ namespace WebApplicationSWEN3
 
             var app = builder.Build();
 
+            // Enable CORS
+            app.UseCors();
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                //
+                // Development-specific settings
             }
 
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
 
-            app.UseDefaultFiles(); // Add this line to serve index.html as the default file
-
-            app.UseStaticFiles(); // Add this line to serve static files from wwwroot
-
+            // Map only API controllers, no static files served by this server
             app.MapControllers();
-            app.Use(async (context, next) =>
-            {
-                // If the request path is not for an API endpoint, redirect to index.html
-                if (!context.Request.Path.StartsWithSegments("/api"))
-                {
-                    context.Request.Path = "/index.html";
-                }
-
-                await next();
-            });
 
             app.Run();
-
         }
     }
 }

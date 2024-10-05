@@ -10,7 +10,7 @@
 
     <script>document.getElementById('fetchDataButton').addEventListener('click', () => {
             // Make a GET request to the API endpoint
-            fetch('/api/document')
+            fetch('http://localhost:8081/api/document')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
