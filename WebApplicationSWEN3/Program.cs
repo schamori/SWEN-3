@@ -37,7 +37,7 @@ namespace WebApplicationSWEN3
                 });
             });
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql("Host=localhost;Port=5432;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9;")
+                options.UseNpgsql("Host=paperless-postgres;Port=5432;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9")
                 );
 
             builder.Services.AddAutoMapper(typeof(DocumentProfile));
