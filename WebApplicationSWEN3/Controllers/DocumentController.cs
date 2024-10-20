@@ -43,12 +43,13 @@ namespace WebApplicationSWEN3.Controllers
 
         // Post: /Document
         [HttpPost]
-        public async Task<ActionResult<DocumentDTO>> PostDocument(DocumentDTO documentItem)
+        public async Task<ActionResult<DocumentDTO>> PostDocument([FromBody] CreateDocumentDTO documentItem)
         {
-            _documentRepo.Update(documentItem);
+            var createdDocument = _documentRepo.Create(documentItem);
 
-            return CreatedAtAction("GetDocumentItem", new { id = documentItem.Id }, documentItem);
+            return CreatedAtAction(nameof(GetDocument), new { id = createdDocument.Id }, createdDocument);
         }
+
         /*
         //  Delete: Document/{id}
         [HttpDelete("{id}")]

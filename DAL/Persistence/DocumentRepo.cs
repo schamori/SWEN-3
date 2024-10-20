@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Persistence
 {
-    public class DocumentRepo
+    public class DocumentRepo : IDocumentRepo
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -25,13 +25,19 @@ namespace DAL.Persistence
             return _context.Documents.ToList();
         }
 
-        public void Create(DocumentDTO documentDto)
+        public DocumentDTO Create(CreateDocumentDTO documentDto)
         {
             var documentEntity = _mapper.Map<Document>(documentDto);
 
+            documentEntity.CreatedAt = DateTime.UtcNow;
+            documentEntity.UpdatedAt = DateTime.UtcNow;
             _context.Documents.Add(documentEntity);
             _context.SaveChanges();
+
+            // Mapping des gespeicherten Dokumentes zurück zu DocumentDTO
+            return _mapper.Map<DocumentDTO>(documentEntity);
         }
+
 
         public DocumentDTO Read(int id)
         {
@@ -52,7 +58,7 @@ namespace DAL.Persistence
             if (documentEntity != null)
             {
                 _mapper.Map(documentDto, documentEntity);
-
+                _context.Entry(documentEntity).State = EntityState.Modified;
                 _context.SaveChanges();
             }
         }

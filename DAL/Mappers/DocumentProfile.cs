@@ -11,6 +11,7 @@ namespace DAL.Mappers
             // Mapping Document -> DocumentDTO und umgekehrt
             CreateMap<Document, DocumentDTO>();
             CreateMap<DocumentDTO, Document>();
+            CreateMap<DocumentDTO, Document>().ReverseMap();
 
             // Mapping CreateDocumentDTO -> Document
             CreateMap<CreateDocumentDTO, Document>()
