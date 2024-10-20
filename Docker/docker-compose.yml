@@ -1,19 +1,18 @@
 version: '3.8'
 services:
   paperless-rest:
-    image: mcr.microsoft.com/dotnet/sdk:8.0
+    build:
+      context: ../
+      dockerfile: Docker/Dockerfile  
     container_name: paperless-rest
     ports:
       - "8081:8081"
-    volumes:
-      - ../WebApplicationSWEN3:/app
-    working_dir: /app
-    command: ["dotnet", "run", "--urls", "http://0.0.0.0:8081"]
     networks:
       - paperless-network
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9
+
+
 
   paperless-webui:
     image: nginx:alpine

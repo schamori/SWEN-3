@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using sws.Models;
 using DAL.Persistence;
 using FluentValidation.AspNetCore;
 using DAL.Validators;

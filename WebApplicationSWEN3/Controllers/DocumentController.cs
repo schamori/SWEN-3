@@ -1,41 +1,30 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using sws.Models;
 using System.Threading.Tasks;
+using DAL.DTO;
+using DAL.Persistence;
+
 
 
 namespace WebApplicationSWEN3.Controllers
 {
     [ApiController]
     [Route("/api/document")]
+
     public class DocumentController : Controller
     {
-        private readonly DocumentContext _context;
+        private readonly DocumentRepo _documentRepo;
 
-        public DocumentController(DocumentContext context)
+        public DocumentController(DocumentRepo context)
         {
-            _context = context;
+            _documentRepo = context;
         }
 
         // GET: /Document
         [HttpGet]
         public IActionResult Get()
         {
-            if (_context.DocumentItems.Count() == 0)
-            {
-                // Hardcode 5 documents if no documents found
-                var documents = new List<DocumentItem>
-                {
-                    new DocumentItem { Id = 1, Title = "Document 1", Content = "Lorem ipsum dolor sit amet." },
-                    new DocumentItem { Id = 2, Title = "Document 2", Content = "Consectetur adipiscing elit." },
-                    new DocumentItem { Id = 3, Title = "Document 3", Content = "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." },
-                    new DocumentItem { Id = 4, Title = "Document 4", Content = "Ut enim ad minim veniam." },
-                    new DocumentItem { Id = 5, Title = "Document 5", Content = "Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat." }
-                };
-
-                return Ok(documents);
-            }
-            return Ok(_context.DocumentItems);
+            return Ok(_documentRepo.Get());
         }
 
 
@@ -44,7 +33,7 @@ namespace WebApplicationSWEN3.Controllers
         [HttpGet("{id}")]
         public IActionResult GetDocument(int id)
         {
-            var document = _context.DocumentItems.Find(id);
+            var document = _documentRepo.Read(id);
             if (document == null)
             {
                 return NotFound($"Document with Id {id} not found!");
@@ -54,14 +43,13 @@ namespace WebApplicationSWEN3.Controllers
 
         // Post: /Document
         [HttpPost]
-        public async Task<ActionResult<DocumentItem>> PostDocument(DocumentItem documentItem)
+        public async Task<ActionResult<DocumentDTO>> PostDocument(DocumentDTO documentItem)
         {
-            _context.DocumentItems.Add(documentItem);
-            await _context.SaveChangesAsync();
+            _documentRepo.Update(documentItem);
 
             return CreatedAtAction("GetDocumentItem", new { id = documentItem.Id }, documentItem);
         }
-
+        /*
         //  Delete: Document/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDocument(int id)
@@ -113,5 +101,7 @@ namespace WebApplicationSWEN3.Controllers
         {
             return _context.DocumentItems.Any(e => e.Id == id);
         }
+
+        */
     }
 }
