@@ -7,8 +7,20 @@
     <h1>Hello, World!</h1>
     <button id="fetchDataButton">Fetch Data from API</button>
     <div id="apiResponse"></div>
+    <h2>Submit a Document</h2>
+    <form id="documentForm">
+        <label for="title">Title:</label><br>
+        <input type="text" id="title" name="title" required><br><br>
 
-    <script>document.getElementById('fetchDataButton').addEventListener('click', () => {
+        <label for="content">Content:</label><br>
+        <textarea id="content" name="content" required></textarea><br><br>
+
+        <button type="submit">Submit Document</button>
+    </form>
+
+    <div id="postResponse"></div>
+    <script>
+    document.getElementById('fetchDataButton').addEventListener('click', () => {
             // Make a GET request to the API endpoint
             fetch('http://localhost:8081/api/document')
                 .then(response => {
@@ -24,6 +36,43 @@
                 .catch(error => {
                     console.error('There was a problem with the fetch operation:', error);
                 });
-        });</script>
+        });
+        document.getElementById('documentForm').addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevent form from submitting traditionally
+
+            // Get form values
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+
+            // Create the DocumentDTO object to send to the API
+            const documentDTO = {
+                Title: title,
+                Content: content
+            };
+
+            // Make a POST request to the API endpoint
+            fetch('http://localhost:8081/api/document', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(documentDTO)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('postResponse').innerText = "Document submitted successfully!";
+                })
+                .catch(error => {
+                    console.error('There was a problem with the POST operation:', error);
+                    document.getElementById('postResponse').innerText = "Error submitting document!";
+                });
+        });
+
+    </script>
 </body>
 </html>
