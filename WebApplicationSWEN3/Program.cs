@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using sws.Models;
+using DAL.Persistence;
 
 namespace WebApplicationSWEN3
 {
@@ -7,6 +9,11 @@ namespace WebApplicationSWEN3
     {
         public static void Main(string[] args)
         {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string folderPath = Path.Combine(basePath, "./", "appsettings.json");
+            IConfiguration config = new ConfigurationBuilder()
+                .AddJsonFile(folderPath, false, true) // add as content / copy-always
+                .Build();
             var builder = WebApplication.CreateBuilder(args);
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
@@ -24,9 +31,10 @@ namespace WebApplicationSWEN3
                            .AllowAnyHeader();
                 });
             });
-
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
             // Configure in-memory database
-            builder.Services.AddDbContext<DocumentContext>(options =>
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseInMemoryDatabase("MyInMemoryDatabase"));
 
             builder.Services.AddEndpointsApiExplorer();
