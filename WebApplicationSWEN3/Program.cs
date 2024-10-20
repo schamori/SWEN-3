@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using sws.Models;
 using DAL.Persistence;
+using FluentValidation.AspNetCore;
+using DAL.Validators;
 
 namespace WebApplicationSWEN3
 {
@@ -15,6 +17,10 @@ namespace WebApplicationSWEN3
                 .AddJsonFile(folderPath, false, true) // add as content / copy-always
                 .Build();
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddControllers().AddFluentValidation(fv =>
+                fv.RegisterValidatorsFromAssemblyContaining<DocumentValidator>());
+
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
 
