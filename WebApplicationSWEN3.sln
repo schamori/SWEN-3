@@ -4,12 +4,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApplicationSWEN3", "WebApplicationSWEN3\WebApplicationSWEN3.csproj", "{912AD89C-36D7-4003-9490-23E6177D7BE4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{89BFFECC-22E6-41C0-9D0E-5B085ACEC17D} = {89BFFECC-22E6-41C0-9D0E-5B085ACEC17D}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{353A8999-3963-405E-8A09-78FE8D946AB0}"
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "paperlessWebUI", "paperlessWebUI\paperlessWebUI.esproj", "{D74DF78A-A848-4290-9599-5B9C3D6FF155}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Docker", "Docker\Docker.csproj", "{A200BCFE-AB20-4164-A18D-1C4DFA180A03}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Docker", "Docker\Docker.csproj", "{A200BCFE-AB20-4164-A18D-1C4DFA180A03}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAL", "DAL\DAL.csproj", "{89BFFECC-22E6-41C0-9D0E-5B085ACEC17D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +36,10 @@ Global
 		{A200BCFE-AB20-4164-A18D-1C4DFA180A03}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A200BCFE-AB20-4164-A18D-1C4DFA180A03}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A200BCFE-AB20-4164-A18D-1C4DFA180A03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89BFFECC-22E6-41C0-9D0E-5B085ACEC17D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89BFFECC-22E6-41C0-9D0E-5B085ACEC17D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89BFFECC-22E6-41C0-9D0E-5B085ACEC17D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89BFFECC-22E6-41C0-9D0E-5B085ACEC17D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -11,6 +11,9 @@ services:
     command: ["dotnet", "run", "--urls", "http://0.0.0.0:8081"]
     networks:
       - paperless-network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9
 
   paperless-webui:
     image: nginx:alpine
@@ -23,6 +26,24 @@ services:
     networks:
       - paperless-network
 
+  postgres:
+    image: postgres:13
+    container_name: paperless-postgres
+    environment:
+      POSTGRES_USER: mamo
+      POSTGRES_PASSWORD: T1P3m!hvQ9
+      POSTGRES_DB: documentsearch
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - paperless-network
+
 networks:
   paperless-network:
     driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
