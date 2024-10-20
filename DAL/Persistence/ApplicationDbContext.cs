@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using DAL.Entities;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace DAL.Persistence
 {
@@ -10,7 +12,8 @@ namespace DAL.Persistence
         {
         }
 
-        // DbSet for each entity that should be mapped to the database
+        
+
         public DbSet<Document> Documents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

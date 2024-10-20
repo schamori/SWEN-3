@@ -32,7 +32,8 @@ namespace WebApplicationSWEN3
                 });
             });
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql("Host=localhost;Port=5432;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9;")
+                );
             // Configure in-memory database
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseInMemoryDatabase("MyInMemoryDatabase"));
