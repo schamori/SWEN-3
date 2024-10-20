@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using DAL.Persistence;
 using FluentValidation.AspNetCore;
 using DAL.Validators;
+using DAL.Mappers;
 
 namespace WebApplicationSWEN3
 {
@@ -23,8 +24,7 @@ namespace WebApplicationSWEN3
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
 
-            // Add services to the container.
-            builder.Services.AddControllers();
+            
 
             // Configure CORS to allow requests from all origins
             builder.Services.AddCors(options =>
@@ -39,9 +39,12 @@ namespace WebApplicationSWEN3
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql("Host=localhost;Port=5432;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9;")
                 );
-            // Configure in-memory database
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseInMemoryDatabase("MyInMemoryDatabase"));
+
+            builder.Services.AddScoped<MapperConfig>();
+            builder.Services.AddScoped<DocumentRepo>();
+            // Add services to the container.
+            builder.Services.AddControllers();
+
 
             builder.Services.AddEndpointsApiExplorer();
 
