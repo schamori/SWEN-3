@@ -55,6 +55,12 @@ namespace WebApplicationSWEN3
             // Enable CORS
             app.UseCors();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                dbContext.Database.Migrate(); // Apply migrations automatically
+            }
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
