@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using DAL.Entities;
+using SharedResources.Entities;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using DAL.Entities;
+using System.Reflection.Metadata;
 
 namespace DAL.Persistence
 {
@@ -14,14 +16,19 @@ namespace DAL.Persistence
 
         
 
-        public DbSet<Document> Documents { get; set; }
+        public DbSet<DocumentDAL> Documents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<DocumentDAL>()
+                .ToTable("Documents")
+                .HasKey(t => t.Id);
 
-            // Optional: If you have any specific configurations for your entities
-            // e.g., modelBuilder.Entity<Document>().Property(d => d.Name).HasMaxLength(100);
+            modelBuilder.Entity<DocumentDAL>()
+                .Property(t => t.Id)
+                .HasColumnType("uuid");
+
         }
     }
 }

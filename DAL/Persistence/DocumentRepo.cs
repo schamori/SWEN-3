@@ -11,35 +11,31 @@ namespace DAL.Persistence
     public class DocumentRepo : IDocumentRepo
     {
         private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
 
         public DocumentRepo(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
-            _mapper = mapper;
         }
 
-        public List<Document> Get()
+        public List<DocumentDAL> Get()
         {
 
             return _context.Documents.ToList();
         }
 
-        public DocumentDTO Create(CreateDocumentDTO documentDto)
+        public DocumentDAL Create(DocumentDAL document)
         {
-            var documentEntity = _mapper.Map<Document>(documentDto);
 
-            documentEntity.CreatedAt = DateTime.UtcNow;
-            documentEntity.UpdatedAt = DateTime.UtcNow;
-            _context.Documents.Add(documentEntity);
+            document.CreatedAt = DateTime.UtcNow;
+            document.UpdatedAt = DateTime.UtcNow;
+            _context.Documents.Add(document);
             _context.SaveChanges();
 
-            // Mapping des gespeicherten Dokumentes zurück zu DocumentDTO
-            return _mapper.Map<DocumentDTO>(documentEntity);
+            return document;
         }
 
 
-        public DocumentDTO Read(int id)
+        public DocumentDAL Read(Guid id)
         {
             var documentEntity = _context.Documents.FirstOrDefault(d => d.Id == id);
 
@@ -48,25 +44,22 @@ namespace DAL.Persistence
                 return null;
             }
 
-            return _mapper.Map<DocumentDTO>(documentEntity);
+            return documentEntity;
         }
 
-        public void Update(DocumentDTO documentDto)
+        public void Update(DocumentDAL document)
         {
-            var documentEntity = _context.Documents.FirstOrDefault(d => d.Id == documentDto.Id);
+            var foundDocument = _context.Documents.FirstOrDefault(d => d.Id == document.Id);
 
-            if (documentEntity != null)
+            if (foundDocument != null)
             {
-                _mapper.Map(documentDto, documentEntity);
-                _context.Entry(documentEntity).State = EntityState.Modified;
+                _context.Entry(foundDocument).State = EntityState.Modified;
                 _context.SaveChanges();
             }
         }
 
-        // Delete operation
-        public void Delete(int id)
+        public void Delete(Guid id)
         {
-            // Find the document entity by id
             var documentEntity = _context.Documents.FirstOrDefault(d => d.Id == id);
 
             if (documentEntity != null)

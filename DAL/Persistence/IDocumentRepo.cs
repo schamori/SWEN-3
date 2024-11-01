@@ -1,14 +1,15 @@
 ﻿using DAL.DTO;
 using DAL.Entities;
+using SharedResources.Entities;
 
 namespace DAL.Persistence
 {
     public interface IDocumentRepo
     {
-        List<Document> Get();
-        DocumentDTO Create(CreateDocumentDTO documentDto);
-        DocumentDTO Read(int id);
-        void Update(DocumentDTO documentDto);
-        void Delete(int id);
+        List<DocumentDAL> Get();
+        DocumentDAL Create(DocumentDAL documentDto);
+        DocumentDAL Read(Guid id);
+        void Update(DocumentDAL documentDto);
+        void Delete(Guid id);
     }
 }

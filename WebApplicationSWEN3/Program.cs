@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using DAL.Persistence;
 using FluentValidation.AspNetCore;
-using DAL.Validators;
-using DAL.Mappers;
+using SharedResources.Validators;
+using SharedResources.Mappers;
 
 namespace WebApplicationSWEN3
 {
@@ -58,7 +58,7 @@ namespace WebApplicationSWEN3
             using (var scope = app.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                dbContext.Database.Migrate(); // Apply migrations automatically
+                dbContext.Database.Migrate(); 
             }
 
             // Configure the HTTP request pipeline.

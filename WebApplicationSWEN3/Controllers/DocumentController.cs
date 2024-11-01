@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using DAL.DTO;
 using DAL.Persistence;
-
+using SharedResources.Entities;
+using AutoMapper;
+using DAL.Entities;
+using System.Reflection.Metadata;
 
 
 namespace WebApplicationSWEN3.Controllers
@@ -13,25 +16,35 @@ namespace WebApplicationSWEN3.Controllers
 
     public class DocumentController : Controller
     {
+        private readonly IMapper _mapper;
+
         private readonly DocumentRepo _documentRepo;
 
-        public DocumentController(DocumentRepo context)
+        public DocumentController(DocumentRepo context, IMapper mapper)
         {
             _documentRepo = context;
+            _mapper = mapper;
+
         }
 
         // GET: /Document
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(_documentRepo.Get());
+            List<DocumentDAL> documentDalList = _documentRepo.Get();
+
+            List<DocumentBl> documentBlList = _mapper.Map<List<DocumentBl>>(documentDalList);
+
+            List<DocumentDTO> documentDtoList = _mapper.Map<List<DocumentDTO>>(documentBlList);
+
+            return Ok(documentDtoList);
         }
 
 
         // GET: /Document/{id}
 
         [HttpGet("{id}")]
-        public IActionResult GetDocument(int id)
+        public IActionResult GetDocument(Guid id)
         {
             var document = _documentRepo.Read(id);
             if (document == null)
@@ -43,9 +56,17 @@ namespace WebApplicationSWEN3.Controllers
 
         // Post: /Document
         [HttpPost]
-        public async Task<ActionResult<DocumentDTO>> PostDocument([FromBody] CreateDocumentDTO documentItem)
+        public async Task<ActionResult<DocumentDTO>> PostDocument([FromForm] IFormFile file)
         {
-            var createdDocument = _documentRepo.Create(documentItem);
+            DocumentBl documentItem = new DocumentBl
+            {
+                Id = Guid.NewGuid(),
+                Title = file.FileName,
+                Filepath = file.FileName
+            };
+
+
+            var createdDocument = _documentRepo.Create(_mapper.Map<DocumentDAL>(documentItem));
 
             return CreatedAtAction(nameof(GetDocument), new { id = createdDocument.Id }, createdDocument);
         }

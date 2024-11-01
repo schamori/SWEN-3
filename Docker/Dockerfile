@@ -5,6 +5,8 @@ WORKDIR /app
 COPY ./WebApplicationSWEN3/. /app/WebApplicationSWEN3
 COPY ./DAL/. /app/DAL
 
+COPY ./SharedResources/. /app/SharedResources
+
 # Build the application
 RUN dotnet build ./WebApplicationSWEN3/WebApplicationSWEN3.csproj
 # Expose the application port
