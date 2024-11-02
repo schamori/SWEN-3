@@ -4,6 +4,10 @@ using DAL.Persistence;
 using FluentValidation.AspNetCore;
 using SharedResources.Validators;
 using SharedResources.Mappers;
+using RabbitMq.QueueLibrary;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSWEN3
 {
@@ -21,10 +25,21 @@ namespace WebApplicationSWEN3
             builder.Services.AddControllers().AddFluentValidation(fv =>
                 fv.RegisterValidatorsFromAssemblyContaining<DocumentValidator>());
 
+
+            builder.Services.AddLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddConsole(); 
+                logging.AddDebug();   
+            });
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
 
-            
+            builder.Services.AddScoped<IQueueProducer, QueueProducer>();
+
+            builder.Services.AddScoped<IQueueProducer, QueueProducer>();
+            builder.Services.AddScoped<IDocumentRepo, DocumentRepo>();
+
 
             // Configure CORS to allow requests from all origins
             builder.Services.AddCors(options =>
@@ -39,6 +54,9 @@ namespace WebApplicationSWEN3
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql("Host=paperless-postgres;Port=5432;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9")
                 );
+
+            builder.Services.Configure<QueueOptions>(config.GetSection("QueueOptions"));
+
 
             builder.Services.AddAutoMapper(typeof(DocumentProfile));
 
@@ -61,8 +79,10 @@ namespace WebApplicationSWEN3
                 dbContext.Database.Migrate(); 
             }
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+
+
+                // Configure the HTTP request pipeline.
+                if (app.Environment.IsDevelopment())
             {
                 // Development-specific settings
             }

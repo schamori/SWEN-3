@@ -6,8 +6,8 @@ using DAL.Persistence;
 using SharedResources.Entities;
 using AutoMapper;
 using DAL.Entities;
-using System.Reflection.Metadata;
-
+using SharedResources.Validators;
+using RabbitMq.QueueLibrary;
 
 namespace WebApplicationSWEN3.Controllers
 {
@@ -18,12 +18,13 @@ namespace WebApplicationSWEN3.Controllers
     {
         private readonly IMapper _mapper;
 
-        private readonly DocumentRepo _documentRepo;
-
-        public DocumentController(DocumentRepo context, IMapper mapper)
+        private readonly IDocumentRepo _documentRepo;
+        private readonly IQueueProducer _queueProducer;
+        public DocumentController(IDocumentRepo context, IMapper mapper, IQueueProducer queueProducer)
         {
             _documentRepo = context;
             _mapper = mapper;
+            _queueProducer = queueProducer;
 
         }
 
@@ -64,6 +65,22 @@ namespace WebApplicationSWEN3.Controllers
                 Title = file.FileName,
                 Filepath = file.FileName
             };
+
+            _queueProducer.Send(documentItem.Filepath, documentItem.Id);
+
+
+            var validator = new DocumentValidator();
+            var results = validator.Validate(documentItem);
+
+            if (!results.IsValid)
+            {
+                foreach (var failure in results.Errors)
+                {
+                    Console.WriteLine("Property " + failure.PropertyName + " failed validation. Error was: " + failure.ErrorMessage);
+                }
+                return StatusCode(StatusCode(400).StatusCode, results.Errors);
+            }
+
 
 
             var createdDocument = _documentRepo.Create(_mapper.Map<DocumentDAL>(documentItem));

@@ -7,6 +7,9 @@ COPY ./DAL/. /app/DAL
 
 COPY ./SharedResources/. /app/SharedResources
 
+COPY ./RabbitMq/. /app/RabbitMq
+
+
 # Build the application
 RUN dotnet build ./WebApplicationSWEN3/WebApplicationSWEN3.csproj
 # Expose the application port
