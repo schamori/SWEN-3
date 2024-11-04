@@ -1,4 +1,4 @@
-﻿namespace DAL.Entities
+﻿namespace SharedResources.Entities
 {
     public class DocumentDAL
     {

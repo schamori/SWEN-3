@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
-using DAL.DTO;
-using DAL.Entities;
 using SharedResources.Entities;
+using SharedResources.DTO;
 
 namespace SharedResources.Mappers
 {

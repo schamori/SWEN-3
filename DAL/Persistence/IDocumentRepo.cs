@@ -1,6 +1,4 @@
-﻿using DAL.DTO;
-using DAL.Entities;
-using SharedResources.Entities;
+﻿using SharedResources.Entities;
 
 namespace DAL.Persistence
 {
@@ -9,7 +7,7 @@ namespace DAL.Persistence
         List<DocumentDAL> Get();
         DocumentDAL Create(DocumentDAL documentDto);
         DocumentDAL Read(Guid id);
-        void Update(DocumentDAL documentDto);
+        DocumentDAL Update(DocumentDAL documentDto);
         void Delete(Guid id);
     }
 }

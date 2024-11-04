@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace DAL.DTO
+namespace SharedResources.DTO
 {
     public class DocumentDTO
     {

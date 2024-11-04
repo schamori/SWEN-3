@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
-using DAL.DTO;
 using DAL.Persistence;
 using SharedResources.Entities;
 using AutoMapper;
-using DAL.Entities;
 using SharedResources.Validators;
 using RabbitMq.QueueLibrary;
+using SharedResources.DTO;
 
 namespace WebApplicationSWEN3.Controllers
 {

@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
-using DAL.Entities;
-using DAL.DTO;
 using Microsoft.EntityFrameworkCore;
+using SharedResources.Entities;
 
 namespace DAL.Persistence
 {
@@ -47,15 +46,19 @@ namespace DAL.Persistence
             return documentEntity;
         }
 
-        public void Update(DocumentDAL document)
+        public DocumentDAL Update(DocumentDAL document)
         {
             var foundDocument = _context.Documents.FirstOrDefault(d => d.Id == document.Id);
 
             if (foundDocument != null)
             {
+                foundDocument.Title = document.Title;
+                foundDocument.Filepath = document.Filepath;
                 _context.Entry(foundDocument).State = EntityState.Modified;
                 _context.SaveChanges();
+                return foundDocument;
             }
+            return null;
         }
 
         public void Delete(Guid id)
