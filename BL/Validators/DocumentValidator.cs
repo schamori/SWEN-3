@@ -1,7 +1,7 @@
-﻿using FluentValidation;
-using SharedResources.Entities;
+﻿using SharedResources.Entities;
+using FluentValidation;
 
-namespace SharedResources.Validators
+namespace BL.Validators
 {
     public class DocumentValidator : AbstractValidator<DocumentBl>
     {

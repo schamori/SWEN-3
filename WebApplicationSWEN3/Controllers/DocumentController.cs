@@ -1,52 +1,38 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
-using DAL.Persistence;
-using SharedResources.Entities;
-using AutoMapper;
-using SharedResources.Validators;
-using RabbitMq.QueueLibrary;
+using BL.Services;
 using SharedResources.DTO;
+using System;
+using System.Threading.Tasks;
+using RabbitMq.QueueLibrary;
 
 namespace WebApplicationSWEN3.Controllers
 {
     [ApiController]
     [Route("/api/document")]
-
     public class DocumentController : Controller
     {
-        private readonly IMapper _mapper;
+        private readonly DocumentService _documentService;
+        private readonly IQueueProducer _queueProducer;  // Füge den QueueProducer hinzu
 
-        private readonly IDocumentRepo _documentRepo;
-        private readonly IQueueProducer _queueProducer;
-        public DocumentController(IDocumentRepo context, IMapper mapper, IQueueProducer queueProducer)
+        public DocumentController(DocumentService documentService, IQueueProducer queueProducer)
         {
-            _documentRepo = context;
-            _mapper = mapper;
-            _queueProducer = queueProducer;
-
+            _documentService = documentService;
+            _queueProducer = queueProducer;  // Weist den QueueProducer zu
         }
 
         // GET: /Document
         [HttpGet]
         public IActionResult Get()
         {
-            List<DocumentDAL> documentDalList = _documentRepo.Get();
-
-            List<DocumentBl> documentBlList = _mapper.Map<List<DocumentBl>>(documentDalList);
-
-            List<DocumentDTO> documentDtoList = _mapper.Map<List<DocumentDTO>>(documentBlList);
-
-            return Ok(documentDtoList);
+            var documents = _documentService.GetDocuments();
+            return Ok(documents);
         }
 
-
         // GET: /Document/{id}
-
         [HttpGet("{id}")]
         public IActionResult GetDocument(Guid id)
         {
-            var document = _documentRepo.Read(id);
+            var document = _documentService.GetDocumentById(id);
             if (document == null)
             {
                 return NotFound($"Document with Id {id} not found!");
@@ -54,92 +40,68 @@ namespace WebApplicationSWEN3.Controllers
             return Ok(document);
         }
 
-        // Post: /Document
+        // POST: /Document
         [HttpPost]
         public async Task<ActionResult<DocumentDTO>> PostDocument([FromForm] IFormFile file)
         {
-            DocumentBl documentItem = new DocumentBl
+            var documentDto = new DocumentDTO
             {
                 Id = Guid.NewGuid(),
                 Title = file.FileName,
                 Filepath = file.FileName
             };
 
-            _queueProducer.Send(documentItem.Filepath, documentItem.Id);
+            var result = _documentService.CreateDocument(documentDto);
 
-
-            var validator = new DocumentValidator();
-            var results = validator.Validate(documentItem);
-
-            if (!results.IsValid)
+            if (result == null)
             {
-                foreach (var failure in results.Errors)
-                {
-                    Console.WriteLine("Property " + failure.PropertyName + " failed validation. Error was: " + failure.ErrorMessage);
-                }
-                return StatusCode(StatusCode(400).StatusCode, results.Errors);
+                return BadRequest("Validation failed or document could not be created.");
             }
 
+            // Schicke eine Nachricht an die Queue, nachdem das Dokument erstellt wurde
+            _queueProducer.Send(result.Title, result.Id);
 
-
-            var createdDocument = _documentRepo.Create(_mapper.Map<DocumentDAL>(documentItem));
-
-            return CreatedAtAction(nameof(GetDocument), new { id = createdDocument.Id }, createdDocument);
+            return CreatedAtAction(nameof(GetDocument), new { id = result.Id }, result);
         }
 
         /*
-        //  Delete: Document/{id}
+        // DELETE: /Document/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDocument(int id)
+        public IActionResult DeleteDocument(Guid id)
         {
-            var document = await _context.DocumentItems.FindAsync(id);
-            if (document == null)
+            var result = _documentService.DeleteDocument(id);
+
+            if (!result)
             {
-                return NotFound("No Documents saved!");
+                return NotFound($"Document with Id {id} not found!");
             }
 
-            _context.DocumentItems.Remove(document);
-            await _context.SaveChangesAsync();
+            // Nachricht an die Queue senden
+            _queueProducer.Produce($"Document with ID {id} has been deleted.");
 
             return NoContent();
         }
 
-        // PUT: Document/{id}
-
+        // PUT: /Document/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutDocument(int id, DocumentItem documentItem)
+        public IActionResult UpdateDocument(Guid id, [FromBody] DocumentDTO documentDto)
         {
-            if (id != documentItem.Id)
+            if (id != documentDto.Id)
             {
-                return BadRequest();
+                return BadRequest("Document ID mismatch.");
             }
 
-            _context.Entry(documentItem).State = EntityState.Modified;
+            var updatedDocument = _documentService.UpdateDocument(documentDto);
 
-            try
+            if (updatedDocument == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound($"Document with Id {id} not found!");
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!DocumentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+
+            // Nachricht an die Queue senden
+            _queueProducer.Produce($"Document {updatedDocument.Title} with ID {updatedDocument.Id} has been updated.");
 
             return NoContent();
-        }
-
-        private bool DocumentExists(int id)
-        {
-            return _context.DocumentItems.Any(e => e.Id == id);
-        }
-
-        */
+        }*/
     }
 }
