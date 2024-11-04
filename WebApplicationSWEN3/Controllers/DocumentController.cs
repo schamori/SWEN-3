@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 using DAL.Persistence;
 using SharedResources.Entities;
 using AutoMapper;
@@ -12,134 +10,159 @@ namespace WebApplicationSWEN3.Controllers
 {
     [ApiController]
     [Route("/api/document")]
-
     public class DocumentController : Controller
     {
         private readonly IMapper _mapper;
-
         private readonly IDocumentRepo _documentRepo;
         private readonly IQueueProducer _queueProducer;
-        public DocumentController(IDocumentRepo context, IMapper mapper, IQueueProducer queueProducer)
+        private readonly ILogger<DocumentController> _logger;
+
+        public DocumentController(IDocumentRepo context, IMapper mapper, IQueueProducer queueProducer, ILogger<DocumentController> logger)
         {
             _documentRepo = context;
             _mapper = mapper;
             _queueProducer = queueProducer;
-
+            _logger = logger;
         }
 
         // GET: /Document
         [HttpGet]
         public IActionResult Get()
         {
-            List<DocumentDAL> documentDalList = _documentRepo.Get();
+            try
+            {
+                _logger.LogInformation("Fetching all documents.");
+                var documentDalList = _documentRepo.Get();
+                var documentBlList = _mapper.Map<List<DocumentBl>>(documentDalList);
+                var documentDtoList = _mapper.Map<List<DocumentDTO>>(documentBlList);
 
-            List<DocumentBl> documentBlList = _mapper.Map<List<DocumentBl>>(documentDalList);
-
-            List<DocumentDTO> documentDtoList = _mapper.Map<List<DocumentDTO>>(documentBlList);
-
-            return Ok(documentDtoList);
+                return Ok(documentDtoList);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while fetching all documents.");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
-
         // GET: /Document/{id}
-
         [HttpGet("{id}")]
         public IActionResult GetDocument(Guid id)
         {
-            var document = _documentRepo.Read(id);
-            if (document == null)
+            try
             {
-                return NotFound($"Document with Id {id} not found!");
+                _logger.LogInformation($"Fetching document with ID: {id}");
+                var document = _documentRepo.Read(id);
+                if (document == null)
+                {
+                    _logger.LogWarning($"Document with ID: {id} not found.");
+                    return NotFound($"Document with ID {id} not found!");
+                }
+                return Ok(document);
             }
-            return Ok(document);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while fetching document with ID: {id}");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
-        // Post: /Document
+        // POST: /Document
         [HttpPost]
         public async Task<ActionResult<DocumentDTO>> PostDocument([FromForm] IFormFile file)
         {
-            DocumentBl documentItem = new DocumentBl
-            {
-                Id = Guid.NewGuid(),
-                Title = file.FileName,
-                Filepath = file.FileName
-            };
-
-            _queueProducer.Send(documentItem.Filepath, documentItem.Id);
-
-
-            var validator = new DocumentValidator();
-            var results = validator.Validate(documentItem);
-
-            if (!results.IsValid)
-            {
-                foreach (var failure in results.Errors)
-                {
-                    Console.WriteLine("Property " + failure.PropertyName + " failed validation. Error was: " + failure.ErrorMessage);
-                }
-                return StatusCode(StatusCode(400).StatusCode, results.Errors);
-            }
-
-
-
-            var createdDocument = _documentRepo.Create(_mapper.Map<DocumentDAL>(documentItem));
-
-            return CreatedAtAction(nameof(GetDocument), new { id = createdDocument.Id }, createdDocument);
-        }
-
-        /*
-        //  Delete: Document/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDocument(int id)
-        {
-            var document = await _context.DocumentItems.FindAsync(id);
-            if (document == null)
-            {
-                return NotFound("No Documents saved!");
-            }
-
-            _context.DocumentItems.Remove(document);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        // PUT: Document/{id}
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutDocument(int id, DocumentItem documentItem)
-        {
-            if (id != documentItem.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(documentItem).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                _logger.LogInformation("Creating a new document.");
+                var documentItem = new DocumentBl
+                {
+                    Id = Guid.NewGuid(),
+                    Title = file.FileName,
+                    Filepath = file.FileName
+                };
+
+                _queueProducer.Send(documentItem.Filepath, documentItem.Id);
+                _logger.LogInformation("Document sent to the queue.");
+
+                var validator = new DocumentValidator();
+                var results = validator.Validate(documentItem);
+
+                if (!results.IsValid)
+                {
+                    _logger.LogWarning("Document validation failed.");
+                    return BadRequest(results.Errors);
+                }
+
+                var createdDocument = _documentRepo.Create(_mapper.Map<DocumentDAL>(documentItem));
+                _logger.LogInformation($"Document created successfully with ID: {createdDocument.Id}");
+
+                return CreatedAtAction(nameof(GetDocument), new { id = createdDocument.Id }, createdDocument);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!DocumentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                _logger.LogError(ex, "An error occurred while creating a new document.");
+                return StatusCode(500, "Internal server error.");
             }
-
-            return NoContent();
         }
-
-        private bool DocumentExists(int id)
+        /* 
+        // DELETE: /Document/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteDocument(Guid id)
         {
-            return _context.DocumentItems.Any(e => e.Id == id);
+            try
+            {
+                _logger.LogInformation($"Deleting document with ID: {id}");
+                var document = _documentRepo.Read(id);
+
+                if (document == null)
+                {
+                    _logger.LogWarning($"Document with ID: {id} not found for deletion.");
+                    return NotFound("Document not found.");
+                }
+
+                _documentRepo.Delete(id);
+                _logger.LogInformation($"Document with ID: {id} deleted successfully.");
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while deleting document with ID: {id}");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
+        // PUT: /Document/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutDocument(Guid id, [FromBody] DocumentDTO documentDto)
+        {
+            try
+            {
+                _logger.LogInformation($"Updating document with ID: {id}");
+
+                if (id != documentDto.Id)
+                {
+                    _logger.LogWarning($"Document ID in the URL ({id}) does not match the document ID in the body ({documentDto.Id}).");
+                    return BadRequest("Document ID mismatch.");
+                }
+
+                var documentBl = _mapper.Map<DocumentBl>(documentDto);
+                var updatedDocument = _documentRepo.Update(_mapper.Map<DocumentDAL>(documentBl));
+
+                if (updatedDocument == null)
+                {
+                    _logger.LogWarning($"Document with ID: {id} not found for update.");
+                    return NotFound("Document not found.");
+                }
+
+                _logger.LogInformation($"Document with ID: {id} updated successfully.");
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while updating document with ID: {id}");
+                return StatusCode(500, "Internal server error.");
+            }
+        }
         */
     }
 }
