@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using DAL.Persistence;
 using FluentValidation.AspNetCore;
-using SharedResources.Validators;
+using BL.Validators;
 using SharedResources.Mappers;
 using RabbitMq.QueueLibrary;
 using Microsoft.Extensions.Configuration;

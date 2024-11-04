@@ -1,7 +1,13 @@
-﻿using FluentValidation;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Metadata;
+using System.Text;
+using System.Threading.Tasks;
+using FluentValidation;
 using SharedResources.Entities;
 
-namespace SharedResources.Validators
+namespace BL.Validators
 {
     public class DocumentValidator : AbstractValidator<DocumentBl>
     {
@@ -16,7 +22,7 @@ namespace SharedResources.Validators
 
             RuleFor(doc => doc.Filepath)
             .NotEmpty().WithMessage("Filepath is required.")
-            .MinimumLength(10).WithMessage("Title must be at least 10 characters long.")
+            .MinimumLength(10).WithMessage("Filepath must be at least 10 characters long.")
             .MaximumLength(120).WithMessage("Filepath cannot be longer than 120 characters.");
 
             RuleFor(doc => doc.CreatedAt)

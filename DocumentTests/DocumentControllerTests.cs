@@ -9,30 +9,34 @@ using SharedResources.DTO;
 using RabbitMq.QueueLibrary;
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
+using BL.Services;
 
 namespace DocumentTests
 {
     [TestFixture]
     public class DocumentControllerTests : IDisposable
     {
-        private Mock<IDocumentRepo> _mockRepo;
+        private Mock<IDocumentServices> _mockService;  // Changed to IDocumentService
         private Mock<IMapper> _mockMapper;
         private Mock<IQueueProducer> _mockQueueProducer;
+        private Mock<ILogger<DocumentController>> _loggerMock;
+
         private DocumentController _controller;
 
         [SetUp]
         public void Setup()
         {
-            _mockRepo = new Mock<IDocumentRepo>();
+            _mockService = new Mock<IDocumentServices>();
             _mockMapper = new Mock<IMapper>();
             _mockQueueProducer = new Mock<IQueueProducer>();
-            _controller = new DocumentController(_mockRepo.Object, _mockMapper.Object, _mockQueueProducer.Object);
+            _loggerMock = new Mock<ILogger<DocumentController>>();
+            _controller = new DocumentController(_mockMapper.Object, _mockQueueProducer.Object, _loggerMock.Object, _mockService.Object);
         }
 
         [TearDown]
         public void TearDown()
         {
-            // Dispose the controller if it implements IDisposable
             if (_controller != null)
             {
                 (_controller as IDisposable)?.Dispose();
@@ -47,26 +51,15 @@ namespace DocumentTests
         [Test]
         public void Get_ShouldReturnListOfDocuments()
         {
-            // Arrange
-            var documentList = new List<DocumentDAL>
-        {
-            new DocumentDAL { Id = Guid.NewGuid(), Title = "Doc1", Filepath = "/path1" },
-            new DocumentDAL { Id = Guid.NewGuid(), Title = "Doc2", Filepath = "/path2" }
-        };
+            var documentList = new List<DocumentDTO>
+            {
+                new DocumentDTO { Id = Guid.NewGuid(), Title = "Doc1", Filepath = "/path1" },
+                new DocumentDTO { Id = Guid.NewGuid(), Title = "Doc2", Filepath = "/path2" }
+            };
+            _mockService.Setup(service => service.GetDocuments()).Returns(documentList);
 
-            var documentDTOList = new List<DocumentDTO>
-        {
-            new DocumentDTO { Id = Guid.NewGuid(), Title = "Doc1", Filepath = "/path1" },
-            new DocumentDTO { Id = Guid.NewGuid(), Title = "Doc2", Filepath = "/path2" }
-        };
-
-            _mockRepo.Setup(repo => repo.Get()).Returns(documentList);
-            _mockMapper.Setup(mapper => mapper.Map<List<DocumentDTO>>(It.IsAny<List<DocumentBl>>())).Returns(documentDTOList);
-
-            // Act
             var result = _controller.Get() as OkObjectResult;
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsInstanceOf<OkObjectResult>(result);
             Assert.AreEqual(200, result.StatusCode);
@@ -75,16 +68,12 @@ namespace DocumentTests
         [Test]
         public void GetDocument_ShouldReturnDocument_WhenDocumentExists()
         {
-            // Arrange
             var documentId = Guid.NewGuid();
-            var document = new DocumentDAL { Id = documentId, Title = "Doc1", Filepath = "/path1" };
+            var document = new DocumentDTO { Id = documentId, Title = "Doc1", Filepath = "/path1" };
+            _mockService.Setup(service => service.GetDocumentById(documentId)).Returns(document);
 
-            _mockRepo.Setup(repo => repo.Read(documentId)).Returns(document);
-
-            // Act
             var result = _controller.GetDocument(documentId) as OkObjectResult;
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsInstanceOf<OkObjectResult>(result);
             Assert.AreEqual(200, result.StatusCode);
@@ -95,7 +84,7 @@ namespace DocumentTests
         {
             // Arrange
             var documentId = Guid.NewGuid();
-            _mockRepo.Setup(repo => repo.Read(documentId)).Returns((DocumentDAL)null);
+            _mockService.Setup(service => service.GetDocumentById(documentId)).Returns((DocumentDTO)null);  // Adjusted to use DocumentDTO
 
             // Act
             var result = _controller.GetDocument(documentId) as NotFoundObjectResult;
