@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using BL.Services;
-using SharedResources.DTO;
-using System;
-using System.Threading.Tasks;
+using DAL.Persistence;
+using SharedResources.Entities;
+using AutoMapper;
+using SharedResources.Validators;
 using RabbitMq.QueueLibrary;
+using SharedResources.DTO;
 
 namespace WebApplicationSWEN3.Controllers
 {
@@ -11,97 +12,157 @@ namespace WebApplicationSWEN3.Controllers
     [Route("/api/document")]
     public class DocumentController : Controller
     {
-        private readonly DocumentService _documentService;
-        private readonly IQueueProducer _queueProducer;  // Füge den QueueProducer hinzu
+        private readonly IMapper _mapper;
+        private readonly IDocumentRepo _documentRepo;
+        private readonly IQueueProducer _queueProducer;
+        private readonly ILogger<DocumentController> _logger;
 
-        public DocumentController(DocumentService documentService, IQueueProducer queueProducer)
+        public DocumentController(IDocumentRepo context, IMapper mapper, IQueueProducer queueProducer, ILogger<DocumentController> logger)
         {
-            _documentService = documentService;
-            _queueProducer = queueProducer;  // Weist den QueueProducer zu
+            _documentRepo = context;
+            _mapper = mapper;
+            _queueProducer = queueProducer;
+            _logger = logger;
         }
 
         // GET: /Document
         [HttpGet]
         public IActionResult Get()
         {
-            var documents = _documentService.GetDocuments();
-            return Ok(documents);
+            try
+            {
+                _logger.LogInformation("Fetching all documents.");
+                var documentDalList = _documentRepo.Get();
+                var documentBlList = _mapper.Map<List<DocumentBl>>(documentDalList);
+                var documentDtoList = _mapper.Map<List<DocumentDTO>>(documentBlList);
+
+                return Ok(documentDtoList);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while fetching all documents.");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
         // GET: /Document/{id}
         [HttpGet("{id}")]
         public IActionResult GetDocument(Guid id)
         {
-            var document = _documentService.GetDocumentById(id);
-            if (document == null)
+            try
             {
-                return NotFound($"Document with Id {id} not found!");
+                _logger.LogInformation($"Fetching document with ID: {id}");
+                var document = _documentRepo.Read(id);
+                if (document == null)
+                {
+                    _logger.LogWarning($"Document with ID: {id} not found.");
+                    return NotFound($"Document with ID {id} not found!");
+                }
+                return Ok(document);
             }
-            return Ok(document);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while fetching document with ID: {id}");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
         // POST: /Document
         [HttpPost]
         public async Task<ActionResult<DocumentDTO>> PostDocument([FromForm] IFormFile file)
         {
-            var documentDto = new DocumentDTO
+            try
             {
-                Id = Guid.NewGuid(),
-                Title = file.FileName,
-                Filepath = file.FileName
-            };
+                _logger.LogInformation("Creating a new document.");
+                var documentItem = new DocumentBl
+                {
+                    Id = Guid.NewGuid(),
+                    Title = file.FileName,
+                    Filepath = file.FileName
+                };
 
-            var result = _documentService.CreateDocument(documentDto);
+                _queueProducer.Send(documentItem.Filepath, documentItem.Id);
+                _logger.LogInformation("Document sent to the queue.");
 
-            if (result == null)
-            {
-                return BadRequest("Validation failed or document could not be created.");
+                var validator = new DocumentValidator();
+                var results = validator.Validate(documentItem);
+
+                if (!results.IsValid)
+                {
+                    _logger.LogWarning("Document validation failed.");
+                    return BadRequest(results.Errors);
+                }
+
+                var createdDocument = _documentRepo.Create(_mapper.Map<DocumentDAL>(documentItem));
+                _logger.LogInformation($"Document created successfully with ID: {createdDocument.Id}");
+
+                return CreatedAtAction(nameof(GetDocument), new { id = createdDocument.Id }, createdDocument);
             }
-
-            // Schicke eine Nachricht an die Queue, nachdem das Dokument erstellt wurde
-            _queueProducer.Send(result.Title, result.Id);
-
-            return CreatedAtAction(nameof(GetDocument), new { id = result.Id }, result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while creating a new document.");
+                return StatusCode(500, "Internal server error.");
+            }
         }
-
-        /*
+        /* 
         // DELETE: /Document/{id}
         [HttpDelete("{id}")]
-        public IActionResult DeleteDocument(Guid id)
+        public async Task<IActionResult> DeleteDocument(Guid id)
         {
-            var result = _documentService.DeleteDocument(id);
-
-            if (!result)
+            try
             {
-                return NotFound($"Document with Id {id} not found!");
+                _logger.LogInformation($"Deleting document with ID: {id}");
+                var document = _documentRepo.Read(id);
+
+                if (document == null)
+                {
+                    _logger.LogWarning($"Document with ID: {id} not found for deletion.");
+                    return NotFound("Document not found.");
+                }
+
+                _documentRepo.Delete(id);
+                _logger.LogInformation($"Document with ID: {id} deleted successfully.");
+                return NoContent();
             }
-
-            // Nachricht an die Queue senden
-            _queueProducer.Produce($"Document with ID {id} has been deleted.");
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while deleting document with ID: {id}");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
         // PUT: /Document/{id}
         [HttpPut("{id}")]
-        public IActionResult UpdateDocument(Guid id, [FromBody] DocumentDTO documentDto)
+        public async Task<IActionResult> PutDocument(Guid id, [FromBody] DocumentDTO documentDto)
         {
-            if (id != documentDto.Id)
+            try
             {
-                return BadRequest("Document ID mismatch.");
+                _logger.LogInformation($"Updating document with ID: {id}");
+
+                if (id != documentDto.Id)
+                {
+                    _logger.LogWarning($"Document ID in the URL ({id}) does not match the document ID in the body ({documentDto.Id}).");
+                    return BadRequest("Document ID mismatch.");
+                }
+
+                var documentBl = _mapper.Map<DocumentBl>(documentDto);
+                var updatedDocument = _documentRepo.Update(_mapper.Map<DocumentDAL>(documentBl));
+
+                if (updatedDocument == null)
+                {
+                    _logger.LogWarning($"Document with ID: {id} not found for update.");
+                    return NotFound("Document not found.");
+                }
+
+                _logger.LogInformation($"Document with ID: {id} updated successfully.");
+                return NoContent();
             }
-
-            var updatedDocument = _documentService.UpdateDocument(documentDto);
-
-            if (updatedDocument == null)
+            catch (Exception ex)
             {
-                return NotFound($"Document with Id {id} not found!");
+                _logger.LogError(ex, $"An error occurred while updating document with ID: {id}");
+                return StatusCode(500, "Internal server error.");
             }
-
-            // Nachricht an die Queue senden
-            _queueProducer.Produce($"Document {updatedDocument.Title} with ID {updatedDocument.Id} has been updated.");
-
-            return NoContent();
-        }*/
+        }
+        */
     }
 }
