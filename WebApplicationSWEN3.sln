@@ -17,11 +17,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharedResources", "SharedRe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMq", "RabbitMq\RabbitMq.csproj", "{F944CEBF-AC4D-4C16-88D8-753C5F822310}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TesseractOCR", "Tesseract\TesseractOCR.csproj", "{912A1D7E-11D5-41BA-9F57-1DD0B169593B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocumentTests", "DocumentTests\DocumentTests.csproj", "{8A8B27EE-F773-4CF6-AC46-53C8A4AE20A6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BL", "BL\BL.csproj", "{C3BA31C2-7843-473F-AD2E-2A1067C8A84B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TesseractOcr", "TesseractOcr\TesseractOcr.csproj", "{A74E1B1C-BD96-436F-96C4-AB78C418387E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,10 +55,6 @@ Global
 		{F944CEBF-AC4D-4C16-88D8-753C5F822310}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F944CEBF-AC4D-4C16-88D8-753C5F822310}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F944CEBF-AC4D-4C16-88D8-753C5F822310}.Release|Any CPU.Build.0 = Release|Any CPU
-		{912A1D7E-11D5-41BA-9F57-1DD0B169593B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{912A1D7E-11D5-41BA-9F57-1DD0B169593B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{912A1D7E-11D5-41BA-9F57-1DD0B169593B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{912A1D7E-11D5-41BA-9F57-1DD0B169593B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8A8B27EE-F773-4CF6-AC46-53C8A4AE20A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8A8B27EE-F773-4CF6-AC46-53C8A4AE20A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A8B27EE-F773-4CF6-AC46-53C8A4AE20A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -67,6 +63,10 @@ Global
 		{C3BA31C2-7843-473F-AD2E-2A1067C8A84B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3BA31C2-7843-473F-AD2E-2A1067C8A84B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3BA31C2-7843-473F-AD2E-2A1067C8A84B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A74E1B1C-BD96-436F-96C4-AB78C418387E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A74E1B1C-BD96-436F-96C4-AB78C418387E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A74E1B1C-BD96-436F-96C4-AB78C418387E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A74E1B1C-BD96-436F-96C4-AB78C418387E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
