@@ -1,5 +1,5 @@
 using System.Reflection.Metadata;
-using SharedResources.Validators;
+using BL.Validators;
 using SharedResources.Entities;
 
 namespace DocumentTests

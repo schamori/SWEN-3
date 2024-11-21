@@ -5,6 +5,8 @@ WORKDIR /app
 COPY ./WebApplicationSWEN3/. /app/WebApplicationSWEN3
 COPY ./DAL/. /app/DAL
 
+COPY ./BL/. /app/BL
+
 COPY ./SharedResources/. /app/SharedResources
 
 COPY ./RabbitMq/. /app/RabbitMq

@@ -2,34 +2,36 @@
 using DAL.Persistence;
 using SharedResources.DTO;
 using SharedResources.Entities;
+using RabbitMq.QueueLibrary;
 using System;
 using System.Collections.Generic;
 
 namespace BL.Services
 {
-    public class DocumentService
+    public class DocumentService : IDocumentServices
     {
         private readonly IDocumentRepo _documentRepo;
         private readonly IMapper _mapper;
+        private readonly IQueueProducer _queueProducer;
 
-        public DocumentService(IDocumentRepo documentRepo, IMapper mapper)
+        public DocumentService(IDocumentRepo documentRepo, IMapper mapper, IQueueProducer queueProducer)
         {
             _documentRepo = documentRepo;
-            _mapper = mapper; 
+            _mapper = mapper;
+            _queueProducer = queueProducer;
         }
 
-        public DocumentDTO GetDocumentById(Guid id)
+        public DocumentBl GetDocumentById(Guid id)
         {
             var documentDal = _documentRepo.Read(id);
             if (documentDal == null)
             {
                 return null;
             }
-
-            return _mapper.Map<DocumentDTO>(documentDal);
+            return _mapper.Map<DocumentBl>(documentDal);
         }
 
-        public DocumentDTO CreateDocument(DocumentDTO documentDto)
+        public DocumentBl CreateDocument(DocumentBl documentDto)
         {
             if (string.IsNullOrEmpty(documentDto.Title))
             {
@@ -40,17 +42,17 @@ namespace BL.Services
 
             _documentRepo.Create(documentDal);
 
-            return documentDto;
+            return _mapper.Map<DocumentBl>(documentDal);
         }
 
-        public List<DocumentDTO> GetDocuments()
+        public List<DocumentBl> GetDocuments()
         {
             var documents = _documentRepo.Get();
 
-            return _mapper.Map<List<DocumentDTO>>(documents);
+            return _mapper.Map<List<DocumentBl>>(documents);
         }
 
-        public DocumentDTO UpdateDocument(DocumentDTO documentDto)
+        /*public DocumentDTO UpdateDocument(DocumentBl documentDto)
         {
             var documentDal = _documentRepo.Read(documentDto.Id);
 
@@ -59,13 +61,12 @@ namespace BL.Services
                 return null;
             }
 
-            // Verwende den Mapper, um das DTO auf das bestehende DAL-Objekt zu mappen
             _mapper.Map(documentDto, documentDal);
 
             _documentRepo.Update(documentDal);
 
             return documentDto;
-        }
+        }*/
 
         public bool DeleteDocument(Guid id)
         {
@@ -77,6 +78,11 @@ namespace BL.Services
 
             _documentRepo.Delete(id);
             return true;
+        }
+
+        public void SendToQueue(string filePath, Guid documentId)
+        {
+            _queueProducer.Send(filePath, documentId);
         }
     }
 }

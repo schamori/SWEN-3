@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DAL.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 using SharedResources.Entities;
 using SharedResources.Mappers;
@@ -18,6 +19,8 @@ namespace DocumentTests
         private ApplicationDbContext _context;
         private DocumentRepo _documentRepo;
         private IMapper _mapper;
+        private Mock<ILogger<DocumentRepo>> _loggerMock;
+
 
         [SetUp]
         public void Setup()
@@ -29,7 +32,8 @@ namespace DocumentTests
             var configuration = new MapperConfiguration(cfg => cfg.AddProfile<DocumentProfile>());
             _context = new ApplicationDbContext(options);
             _mapper = configuration.CreateMapper();
-            _documentRepo = new DocumentRepo(_context, _mapper); // Falls du kein Mapper verwendest, kannst du null übergeben
+            _loggerMock = new Mock<ILogger<DocumentRepo>>();
+            _documentRepo = new DocumentRepo(_context, _mapper, _loggerMock.Object);
         }
 
         [TearDown]

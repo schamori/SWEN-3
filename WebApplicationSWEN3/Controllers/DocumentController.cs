@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using DAL.Persistence;
 using SharedResources.Entities;
 using AutoMapper;
-using SharedResources.Validators;
+using BL.Validators;
+using BL.Services;
 using RabbitMq.QueueLibrary;
 using SharedResources.DTO;
+using FluentValidation;
 
 namespace WebApplicationSWEN3.Controllers
 {
@@ -13,13 +15,14 @@ namespace WebApplicationSWEN3.Controllers
     public class DocumentController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IDocumentRepo _documentRepo;
+        private readonly IDocumentServices _bl;
         private readonly IQueueProducer _queueProducer;
         private readonly ILogger<DocumentController> _logger;
 
-        public DocumentController(IDocumentRepo context, IMapper mapper, IQueueProducer queueProducer, ILogger<DocumentController> logger)
+        public DocumentController( IMapper mapper, IQueueProducer queueProducer, 
+            ILogger<DocumentController> logger, IDocumentServices bl)
         {
-            _documentRepo = context;
+            _bl = bl;
             _mapper = mapper;
             _queueProducer = queueProducer;
             _logger = logger;
@@ -32,11 +35,9 @@ namespace WebApplicationSWEN3.Controllers
             try
             {
                 _logger.LogInformation("Fetching all documents.");
-                var documentDalList = _documentRepo.Get();
-                var documentBlList = _mapper.Map<List<DocumentBl>>(documentDalList);
-                var documentDtoList = _mapper.Map<List<DocumentDTO>>(documentBlList);
+                var documentDalList = _bl.GetDocuments();
 
-                return Ok(documentDtoList);
+                return Ok(documentDalList);
             }
             catch (Exception ex)
             {
@@ -52,7 +53,7 @@ namespace WebApplicationSWEN3.Controllers
             try
             {
                 _logger.LogInformation($"Fetching document with ID: {id}");
-                var document = _documentRepo.Read(id);
+                var document = _bl.GetDocumentById(id);
                 if (document == null)
                 {
                     _logger.LogWarning($"Document with ID: {id} not found.");
@@ -74,26 +75,26 @@ namespace WebApplicationSWEN3.Controllers
             try
             {
                 _logger.LogInformation("Creating a new document.");
+
                 var documentItem = new DocumentBl
                 {
                     Id = Guid.NewGuid(),
                     Title = file.FileName,
                     Filepath = file.FileName
                 };
-
-                _queueProducer.Send(documentItem.Filepath, documentItem.Id);
-                _logger.LogInformation("Document sent to the queue.");
-
                 var validator = new DocumentValidator();
                 var results = validator.Validate(documentItem);
 
                 if (!results.IsValid)
                 {
                     _logger.LogWarning("Document validation failed.");
-                    return BadRequest(results.Errors);
+                    return BadRequest(results.Errors.First().ErrorMessage);
                 }
 
-                var createdDocument = _documentRepo.Create(_mapper.Map<DocumentDAL>(documentItem));
+                var createdDocument = _bl.CreateDocument(documentItem);
+                _bl.SendToQueue(documentItem.Filepath, documentItem.Id);
+                _logger.LogInformation("Document sent to the queue.");
+
                 _logger.LogInformation($"Document created successfully with ID: {createdDocument.Id}");
 
                 return CreatedAtAction(nameof(GetDocument), new { id = createdDocument.Id }, createdDocument);

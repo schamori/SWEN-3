@@ -5,11 +5,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
 	</ItemGroup>
+
 	<ItemGroup>
 	  <ProjectReference Include="..\DAL\DAL.csproj" />
+		<ProjectReference Include="..\RabbitMq\RabbitMq.csproj" />
 	  <ProjectReference Include="..\SharedResources\SharedResources.csproj" />
 	</ItemGroup>
 

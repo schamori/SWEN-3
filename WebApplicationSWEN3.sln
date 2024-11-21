@@ -19,9 +19,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMq", "RabbitMq\Rabbit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tesseract", "Tesseract\Tesseract.csproj", "{912A1D7E-11D5-41BA-9F57-1DD0B169593B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocumentTests", "DocumentTests\DocumentTests.csproj", "{8A8B27EE-F773-4CF6-AC46-53C8A4AE20A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocumentTests", "DocumentTests\DocumentTests.csproj", "{8A8B27EE-F773-4CF6-AC46-53C8A4AE20A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BL", "BL\BL.csproj", "{DCB06AB0-230E-4982-861C-50899D9C8182}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BL", "BL\BL.csproj", "{C3BA31C2-7843-473F-AD2E-2A1067C8A84B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,10 +63,10 @@ Global
 		{8A8B27EE-F773-4CF6-AC46-53C8A4AE20A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A8B27EE-F773-4CF6-AC46-53C8A4AE20A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A8B27EE-F773-4CF6-AC46-53C8A4AE20A6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DCB06AB0-230E-4982-861C-50899D9C8182}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DCB06AB0-230E-4982-861C-50899D9C8182}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DCB06AB0-230E-4982-861C-50899D9C8182}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DCB06AB0-230E-4982-861C-50899D9C8182}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3BA31C2-7843-473F-AD2E-2A1067C8A84B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3BA31C2-7843-473F-AD2E-2A1067C8A84B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3BA31C2-7843-473F-AD2E-2A1067C8A84B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3BA31C2-7843-473F-AD2E-2A1067C8A84B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
