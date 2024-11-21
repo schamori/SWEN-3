@@ -7,6 +7,7 @@ using BL.Services;
 using RabbitMq.QueueLibrary;
 using SharedResources.DTO;
 using FluentValidation;
+using BL;
 
 namespace WebApplicationSWEN3.Controllers
 {
@@ -76,28 +77,23 @@ namespace WebApplicationSWEN3.Controllers
             {
                 _logger.LogInformation("Creating a new document.");
 
-                var documentItem = new DocumentBl
+                var documentItem = new DocumentDTO
                 {
                     Id = Guid.NewGuid(),
                     Title = file.FileName,
                     Filepath = file.FileName
                 };
-                var validator = new DocumentValidator();
-                var results = validator.Validate(documentItem);
-
-                if (!results.IsValid)
-                {
-                    _logger.LogWarning("Document validation failed.");
-                    return BadRequest(results.Errors.First().ErrorMessage);
-                }
-
-                var createdDocument = _bl.CreateDocument(documentItem);
-                _bl.SendToQueue(documentItem.Filepath, documentItem.Id);
-                _logger.LogInformation("Document sent to the queue.");
+                
+                var createdDocument = _bl.CreateDocument(_mapper.Map<DocumentBl>(documentItem));
 
                 _logger.LogInformation($"Document created successfully with ID: {createdDocument.Id}");
 
                 return CreatedAtAction(nameof(GetDocument), new { id = createdDocument.Id }, createdDocument);
+            }
+            catch (BL.ValidationException ex)
+            {
+                _logger.LogWarning("Document validation failed.");
+                return BadRequest(ex.Errors);
             }
             catch (Exception ex)
             {
@@ -105,6 +101,7 @@ namespace WebApplicationSWEN3.Controllers
                 return StatusCode(500, "Internal server error.");
             }
         }
+
         /* 
         // DELETE: /Document/{id}
         [HttpDelete("{id}")]

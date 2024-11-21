@@ -49,16 +49,26 @@
                 })
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('Network response was not ok');
+                            return response.json().then(errorData => {
+                                throw errorData; // Werfe die Fehlerdetails, um sie im Catch zu behandeln
+                            });
                         }
                         return response.json();
                     })
                     .then(data => {
                         document.getElementById('postResponse').innerText = "Document submitted successfully!";
                     })
-                    .catch(error => {
-                        console.error('There was a problem with the POST operation:', error);
-                        document.getElementById('postResponse').innerText = "Error submitting document!";
+                    .catch(errorArray => {
+                        console.error('Error Response:', errorArray);
+
+                        if (Array.isArray(errorArray)) {
+                            // Extrahiere die Fehlernachrichten aus dem Array
+                            const errorMessages = errorArray.map(error => `${error.propertyName}: ${error.errorMessage}`);
+                            document.getElementById('postResponse').innerText = errorMessages.join("\n");
+                        } else {
+                            // Fallback für unerwartete Fehler
+                            document.getElementById('postResponse').innerText = "An unexpected error occurred.";
+                        }
                     });
             } else {
                 document.getElementById('postResponse').innerText = "Please upload a valid document file.";

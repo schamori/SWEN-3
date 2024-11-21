@@ -5,6 +5,7 @@ using SharedResources.Entities;
 using RabbitMq.QueueLibrary;
 using System;
 using System.Collections.Generic;
+using BL.Validators;
 
 namespace BL.Services
 {
@@ -33,14 +34,18 @@ namespace BL.Services
 
         public DocumentBl CreateDocument(DocumentBl documentDto)
         {
-            if (string.IsNullOrEmpty(documentDto.Title))
+            var validator = new DocumentValidator();
+            var results = validator.Validate(documentDto);
+
+            if (!results.IsValid)
             {
-                throw new ArgumentException("Title is required.");
+                throw new ValidationException(results.Errors);
             }
 
             var documentDal = _mapper.Map<DocumentDAL>(documentDto);
-
             _documentRepo.Create(documentDal);
+
+            SendToQueue(documentDto.Filepath, documentDto.Id);
 
             return _mapper.Map<DocumentBl>(documentDal);
         }

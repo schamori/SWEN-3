@@ -8,6 +8,7 @@ using RabbitMq.QueueLibrary;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using BL.Services;
 
 namespace WebApplicationSWEN3
 {
@@ -37,7 +38,8 @@ namespace WebApplicationSWEN3
 
             builder.Services.AddScoped<IQueueProducer, QueueProducer>();
 
-            builder.Services.AddScoped<IQueueProducer, QueueProducer>();
+            builder.Services.AddScoped<IDocumentServices, DocumentService>();
+
             builder.Services.AddScoped<IDocumentRepo, DocumentRepo>();
 
 
