@@ -11,11 +11,15 @@ COPY ./SharedResources/. /app/SharedResources
 
 COPY ./RabbitMq/. /app/RabbitMq
 
+COPY ./TesseractOcr/. /app/TesseractOcr
+
+COPY ./FileStorageService/. /app/FileStorageService
+
 
 # Build the application
 RUN dotnet build ./WebApplicationSWEN3/WebApplicationSWEN3.csproj
 # Expose the application port
-EXPOSE 8081
+EXPOSE 8082
 
 # Run the application
 ENTRYPOINT ["dotnet", "run", "--project", "./WebApplicationSWEN3/WebApplicationSWEN3.csproj", "--urls", "http://0.0.0.0:8081"]

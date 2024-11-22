@@ -42,7 +42,7 @@ namespace WebApplicationSWEN3
 
             builder.Services.AddScoped<IDocumentRepo, DocumentRepo>();
 
-
+            builder.Services.AddSwaggerGen();
             // Configure CORS to allow requests from all origins
             builder.Services.AddCors(options =>
             {
@@ -83,10 +83,10 @@ namespace WebApplicationSWEN3
 
 
 
-                // Configure the HTTP request pipeline.
-                if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment())
             {
-                // Development-specific settings
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
 
             app.UseHttpsRedirection();

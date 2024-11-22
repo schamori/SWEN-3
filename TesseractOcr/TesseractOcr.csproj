@@ -10,4 +10,13 @@
     <ProjectReference Include="..\RabbitMq\RabbitMq.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="tessdata\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.2.0" />
+    <PackageReference Include="Tesseract" Version="5.2.0" />
+  </ItemGroup>
+
 </Project>

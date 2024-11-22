@@ -1,29 +1,20 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration;
-using RabbitMq.QueueLibrary;
+﻿// See https://aka.ms/new-console-template for more information
+using TesseractOcr;
 
+Console.WriteLine("OCR with Tesseract Demo!");
 
-var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
+string filePath = "./docs/HelloWorld.pdf";
 
-string basePath = AppDomain.CurrentDomain.BaseDirectory;
-string folderPath = Path.Combine(basePath, "./", "appsettings.json");
-IConfiguration config = new ConfigurationBuilder()
-    .AddJsonFile(folderPath, false, true) // add as content / copy-always
-    .Build();
-
-builder.Services.AddLogging(logging =>
+try
 {
-    logging.ClearProviders();
-    logging.AddConsole();
-    logging.AddDebug();
-});
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
+    using FileStream fileStream = new FileStream(filePath, FileMode.Open);
+    using StreamReader reader = new StreamReader(fileStream);
+    OcrClient ocrClient = new OcrClient(new OcrOptions());
 
-builder.Services.AddScoped<IQueueProducer, QueueProducer>();
-builder.Services.Configure<QueueOptions>(config.GetSection("QueueOptions"));
-
-
-
-app.Run();
+    var ocrContentText = ocrClient.OcrPdf(fileStream);
+    Console.WriteLine( ocrContentText );
+}
+catch (IOException e)
+{
+    Console.WriteLine("An error occurred: " + e.Message);
+}
