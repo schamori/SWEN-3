@@ -14,12 +14,14 @@ namespace BL.Services
         private readonly IDocumentRepo _documentRepo;
         private readonly IMapper _mapper;
         private readonly IQueueProducer _queueProducer;
+        private readonly IQueueConsumer _queueConsumer;
 
-        public DocumentService(IDocumentRepo documentRepo, IMapper mapper, IQueueProducer queueProducer)
+        public DocumentService(IDocumentRepo documentRepo, IMapper mapper, IQueueProducer queueProducer, IQueueConsumer queueConsumer)
         {
             _documentRepo = documentRepo;
             _mapper = mapper;
             _queueProducer = queueProducer;
+            _queueConsumer = queueConsumer;
         }
 
         public DocumentBl GetDocumentById(Guid id)

@@ -1,0 +1,19 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+WORKDIR /app
+
+COPY ./TesseractOcr/. /app/TesseractOcr
+
+COPY ./RabbitMq/. /app/RabbitMq
+
+
+COPY ./FileStorageService/. /app/FileStorageService
+
+
+# Build the application
+RUN dotnet build ./TesseractOcr/TesseractOcr.csproj
+# Expose the application port
+EXPOSE 8082
+
+# Run the application
+ENTRYPOINT ["dotnet", "run", "--project", "./TesseractOcr/TesseractOcr.csproj", "--urls", "http://0.0.0.0:8082"]

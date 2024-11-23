@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using ImageMagick;
 using Microsoft.Extensions.Options;
+using RabbitMq.QueueLibrary;
 using Tesseract;
 
 namespace TesseractOcr;
@@ -12,8 +13,9 @@ public class OcrClient : IOcrClient
 
     public OcrClient(OcrOptions options)
     {
-        this.tessDataPath = options.TessDataPath;
-        this.language = options.Language;
+        tessDataPath = options.TessDataPath;
+        language = options.Language;
+
     }
 
     public string OcrPdf(Stream pdfStream)

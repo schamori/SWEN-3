@@ -1,17 +1,26 @@
 version: '3.8'
 services:
+  tesseract-ocr:
+    build:
+      context: ../
+      dockerfile: ./Docker/DockerOcr 
+    container_name: tesseract-ocr
+    ports:
+      - "8082:8082"
+    networks:
+      - paperless-network
+    depends_on:
+      - rabbitmq
+
   paperless-rest:
     build:
       context: ../
-      dockerfile: Docker/Dockerfile  
+      dockerfile: Docker/DockerRest 
     container_name: paperless-rest
     ports:
       - "8081:8081"
     networks:
       - paperless-network
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=paperless-postgres;Port=5432;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9
 
   paperless-webui:
     image: nginx:alpine
@@ -43,50 +52,14 @@ services:
     image: rabbitmq:3.9.29-management-alpine
     ports:
         - 5672:5672
-        - 9093:15672
+        - 15672:15672
     environment:
       RABBITMQ_DEFAULT_USER: user      
       RABBITMQ_DEFAULT_PASS: password 
     networks:
       - paperless-network
 
-  tesseract-ocr:
-    build:
-      context: ../
-      dockerfile: ./Docker/Dockerfile  
-    container_name: tesseract-ocr
-    depends_on:
-      - rabbitmq
-    environment:
-      - OCR_QUEUE=ocr_jobs
-      - RESULT_QUEUE=ocr_results
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USER=user
-      - RABBITMQ_PASSWORD=password
-      - TESSDATA_PREFIX=/app/tessdata
-    volumes:
-      - ./tessdata:/app/tessdata
-    networks:
-      - paperless-network
 
-  file-storage-service:
-    build:
-      context: ../
-      dockerfile: ./Docker/Dockerfile  
-    container_name: file-storage-service
-    ports:
-      - "8082:8082"
-    environment:
-      - ASPNETCORE_URLS=http://0.0.0.0:8082
-      - ASPNETCORE_ENVIRONMENT=Development
-      - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-      - MINIO_BUCKET=documents
-    networks:
-      - paperless-network
-    depends_on:
-      - minio
 
   minio:
     image: minio/minio

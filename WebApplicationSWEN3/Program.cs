@@ -37,6 +37,8 @@ namespace WebApplicationSWEN3
             builder.Logging.AddConsole();
 
             builder.Services.AddScoped<IQueueProducer, QueueProducer>();
+            builder.Services.AddScoped<IQueueConsumer, QueueConsumer>();
+
 
             builder.Services.AddScoped<IDocumentServices, DocumentService>();
 
@@ -58,6 +60,9 @@ namespace WebApplicationSWEN3
                 );
 
             builder.Services.Configure<QueueOptions>(config.GetSection("QueueOptions"));
+
+
+            var tmp = config.GetSection("QueueOptions");
 
 
             builder.Services.AddAutoMapper(typeof(DocumentProfile));
