@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using BL.Services;
 using FileStorageService.Controllers;
+using Minio;
 
 namespace WebApplicationSWEN3
 {
@@ -41,7 +42,11 @@ namespace WebApplicationSWEN3
             var ocrQueueOptions = config.GetSection("QueueOptionsOcr").Get<QueueOptions>();
             var resultQueueOptions = config.GetSection("QueueOptionsResult").Get<QueueOptions>();
 
-
+            builder.Services.AddSingleton<IMinioClient>(_ =>
+            new MinioClient()
+                .WithEndpoint(config["FileStorage:Endpoint"].Replace("http://", "").Replace("https://", ""))
+                .WithCredentials(config["FileStorage:AccessKey"], config["FileStorage:SecretKey"])
+                .Build());
 
             // Register QueueProducer with OCR options and logging
             builder.Services.AddScoped<IQueueProducer>(provider =>

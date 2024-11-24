@@ -21,6 +21,16 @@ namespace FileStorageService.Controllers
 
         public async Task UploadAsync(Stream fileStream, string fileName, string contentType)
         {
+            // Prüfen, ob der Bucket existiert
+            var bucketExists = await _minioClient.BucketExistsAsync(new BucketExistsArgs().WithBucket(_options.BucketName));
+
+            if (!bucketExists)
+            {
+                // Bucket erstellen, falls er nicht existiert
+                await _minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_options.BucketName));
+            }
+
+            // Datei hochladen
             await _minioClient.PutObjectAsync(new PutObjectArgs()
                 .WithBucket(_options.BucketName)
                 .WithObject(fileName)
@@ -28,6 +38,7 @@ namespace FileStorageService.Controllers
                 .WithObjectSize(fileStream.Length)
                 .WithContentType(contentType));
         }
+
     }
 
 }
