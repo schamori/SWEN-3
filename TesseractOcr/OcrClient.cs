@@ -18,7 +18,7 @@ public class OcrClient : IOcrClient
 
     }
 
-    public string OcrPdf(Stream pdfStream)
+    public async Task<string> OcrPdf(Stream pdfStream)
     {
         var stringBuilder = new StringBuilder();
 

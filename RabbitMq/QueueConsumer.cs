@@ -28,13 +28,13 @@ public class QueueConsumer : QueueClient, IQueueConsumer
             try
             {
                 // received message  
-                var content = System.Text.Encoding.UTF8.GetString(ea.Body.ToArray());
+                var fileName = System.Text.Encoding.UTF8.GetString(ea.Body.ToArray());
                 var guid = Guid.Parse(ea.BasicProperties.CorrelationId);
 
-                _logger.LogInformation($"Received message {guid}");
+                _logger.LogInformation($"QueueConsumer received message {guid} with {fileName}");
 
                 // handle the received message  
-                HandleMessage(content, guid);
+                HandleMessage(fileName, guid);
                 RabbitMqChannel.BasicAck(ea.DeliveryTag, false);
             }
             catch (Exception ex)
@@ -93,11 +93,11 @@ public class QueueConsumer : QueueClient, IQueueConsumer
         RabbitMqConnection.Dispose();
     }
 
-    private void HandleMessage(string content, Guid guid)
+    private void HandleMessage(string fileName, Guid guid)
     {
         if (this.OnReceived != null)
         {
-            this.OnReceived(this, new QueueReceivedEventArgs(content, guid));
+            this.OnReceived(this, new QueueReceivedEventArgs(fileName, guid));
         }
     }
 

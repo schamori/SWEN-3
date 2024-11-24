@@ -3,7 +3,10 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
 # Installiere Ghostscript
-RUN apt-get update && apt-get install -y ghostscript
+RUN apt-get update && apt-get install -y \
+    imagemagick \
+    ghostscript
+
 
 COPY ./TesseractOcr/. /app/TesseractOcr
 

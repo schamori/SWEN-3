@@ -2,7 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using RabbitMq.QueueLibrary;
 using TesseractOcr;
-
+using FileStorageService.Controllers;
+using Minio;
 
 string basePath = AppDomain.CurrentDomain.BaseDirectory;
 string folderPath = Path.Combine(basePath, "./", "appsettings.json");
@@ -37,7 +38,6 @@ var ocrQueueOptions = config.GetSection("QueueOptionsOcr").Get<QueueOptions>();
 var resultQueueOptions = config.GetSection("QueueOptionsResult").Get<QueueOptions>();
 
 
-
 // Register QueueProducer with OCR options and logging
 builder.Services.AddScoped<IQueueProducer>(provider =>
 {
@@ -49,11 +49,20 @@ builder.Services.AddScoped<IQueueProducer>(provider =>
 builder.Services.AddScoped<IQueueConsumer>(provider =>
 {
     var logger = provider.GetRequiredService<ILogger<QueueConsumer>>();
-    return new QueueConsumer(ocrQueueOptions, logger);
+    return new QueueConsumer(
+        ocrQueueOptions,
+        logger
+    );
 });
 
+builder.Services.AddSingleton<IMinioClient>(_ =>
+            new MinioClient()
+                .WithEndpoint(config["FileStorage:Endpoint"].Replace("http://", "").Replace("https://", ""))
+                .WithCredentials(config["FileStorage:AccessKey"], config["FileStorage:SecretKey"])
+                .Build());
 
 builder.Services.AddScoped<IOcrClient, OcrClient>();
+builder.Services.AddScoped<IFilesApi, FilesApi>();
 builder.Services.AddScoped<IQueueService, QueueService>();
 
 

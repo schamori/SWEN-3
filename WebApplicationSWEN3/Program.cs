@@ -62,8 +62,6 @@ namespace WebApplicationSWEN3
                 return new QueueConsumer(resultQueueOptions, logger);
             });
 
-
-
             builder.Services.AddScoped<IDocumentServices, DocumentService>();
 
             builder.Services.AddScoped<IDocumentRepo, DocumentRepo>();

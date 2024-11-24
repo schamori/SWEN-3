@@ -5,5 +5,5 @@ namespace TesseractOcr;
 
 public interface IOcrClient
 {
-    string OcrPdf(Stream pdfStream);
+    Task<string> OcrPdf(Stream pdfStream);
 }
