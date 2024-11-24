@@ -30,8 +30,6 @@ builder.Services.AddScoped<IQueueService, QueueService>();
 
 builder.Services.Configure<QueueOptions>(config.GetSection("QueueOptions"));
 
-
-
 builder.Services.AddLogging(logging =>
 {
     logging.ClearProviders();
@@ -46,8 +44,8 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var queueService = scope.ServiceProvider.GetRequiredService<IQueueProducer>();
+    var queueService = scope.ServiceProvider.GetRequiredService<IQueueService>();
 
-// queueService.Start(); 
+    queueService.Start();
 }
 

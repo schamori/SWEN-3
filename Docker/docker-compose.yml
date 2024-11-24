@@ -6,11 +6,13 @@ services:
       dockerfile: ./Docker/DockerOcr 
     container_name: tesseract-ocr
     ports:
-      - "8082:8082"
+      - "8082:80"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks:
       - paperless-network
-    depends_on:
-      - rabbitmq
+    
 
   paperless-rest:
     build:
@@ -49,7 +51,13 @@ services:
 
 
   rabbitmq:
-    image: rabbitmq:3.9.29-management-alpine
+    image: rabbitmq:latest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    container_name: rabbitmq
     ports:
         - 5672:5672
         - 15672:15672
