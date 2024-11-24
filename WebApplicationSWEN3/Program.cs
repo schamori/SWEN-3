@@ -36,8 +36,26 @@ namespace WebApplicationSWEN3
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
 
-            builder.Services.AddScoped<IQueueProducer, QueueProducer>();
-            builder.Services.AddScoped<IQueueConsumer, QueueConsumer>();
+
+            var ocrQueueOptions = config.GetSection("QueueOptionsOcr").Get<QueueOptions>();
+            var resultQueueOptions = config.GetSection("QueueOptionsResult").Get<QueueOptions>();
+
+
+
+            // Register QueueProducer with OCR options and logging
+            builder.Services.AddScoped<IQueueProducer>(provider =>
+            {
+                var logger = provider.GetRequiredService<ILogger<QueueProducer>>();
+                return new QueueProducer(ocrQueueOptions, logger);
+            });
+
+            // Register QueueConsumer with Result options and logging
+            builder.Services.AddScoped<IQueueConsumer>(provider =>
+            {
+                var logger = provider.GetRequiredService<ILogger<QueueConsumer>>();
+                return new QueueConsumer(resultQueueOptions, logger);
+            });
+
 
 
             builder.Services.AddScoped<IDocumentServices, DocumentService>();
@@ -59,7 +77,6 @@ namespace WebApplicationSWEN3
                 options.UseNpgsql("Host=paperless-postgres;Port=5432;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9")
                 );
 
-            builder.Services.Configure<QueueOptions>(config.GetSection("QueueOptions"));
 
 
             var tmp = config.GetSection("QueueOptions");

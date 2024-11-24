@@ -1,4 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using Microsoft.Extensions.DependencyInjection;
 using RabbitMq.QueueLibrary;
 using TesseractOcr;
 
@@ -21,15 +22,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddScoped<OcrOptions>();
-
-builder.Services.AddScoped<IQueueProducer, QueueProducer>();
-builder.Services.AddScoped<IOcrClient, OcrClient>();
-builder.Services.AddScoped<IQueueConsumer, QueueConsumer>();
-builder.Services.AddScoped<IQueueService, QueueService>();
-
-builder.Services.Configure<QueueOptions>(config.GetSection("QueueOptions"));
-
 builder.Services.AddLogging(logging =>
 {
     logging.ClearProviders();
@@ -38,6 +30,32 @@ builder.Services.AddLogging(logging =>
 });
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+
+builder.Services.AddScoped<OcrOptions>();
+
+var ocrQueueOptions = config.GetSection("QueueOptionsOcr").Get<QueueOptions>();
+var resultQueueOptions = config.GetSection("QueueOptionsResult").Get<QueueOptions>();
+
+
+
+// Register QueueProducer with OCR options and logging
+builder.Services.AddScoped<IQueueProducer>(provider =>
+{
+    var logger = provider.GetRequiredService<ILogger<QueueProducer>>();
+    return new QueueProducer(resultQueueOptions, logger);
+});
+
+// Register QueueConsumer with Result options and logging
+builder.Services.AddScoped<IQueueConsumer>(provider =>
+{
+    var logger = provider.GetRequiredService<ILogger<QueueConsumer>>();
+    return new QueueConsumer(ocrQueueOptions, logger);
+});
+
+
+builder.Services.AddScoped<IOcrClient, OcrClient>();
+builder.Services.AddScoped<IQueueService, QueueService>();
+
 
 var app = builder.Build();
 

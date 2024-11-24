@@ -6,6 +6,7 @@ using RabbitMq.QueueLibrary;
 using System;
 using System.Collections.Generic;
 using BL.Validators;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace BL.Services
 {
@@ -24,6 +25,39 @@ namespace BL.Services
             _queueConsumer = queueConsumer;
         }
 
+        private async Task<string> ConsumeOcrQueue()
+        {
+            _queueConsumer.StartReceive();
+
+            var taskCompletionSource = new TaskCompletionSource<string>();
+
+            _queueConsumer.OnReceived += (sender, eventArgs) =>
+            {
+                Console.WriteLine("Message received in event handler.");
+                var content = eventArgs.Content;
+                
+                taskCompletionSource.SetResult(content);
+                _queueConsumer.OnReceived -= null;
+
+
+
+            };
+
+
+            try
+            {
+                var result = await taskCompletionSource.Task;
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // Log the error or handle it as needed
+                throw new Exception("Error while waiting for the first message", ex);
+            }
+
+        }
+
         public DocumentBl GetDocumentById(Guid id)
         {
             var documentDal = _documentRepo.Read(id);
@@ -34,7 +68,7 @@ namespace BL.Services
             return _mapper.Map<DocumentBl>(documentDal);
         }
 
-        public DocumentBl CreateDocument(DocumentBl documentDto)
+        public async Task<string> CreateDocument(DocumentBl documentDto)
         {
             var validator = new DocumentValidator();
             var results = validator.Validate(documentDto);
@@ -49,7 +83,9 @@ namespace BL.Services
 
             SendToQueue(documentDto.Filepath, documentDto.Id);
 
-            return _mapper.Map<DocumentBl>(documentDal);
+            var result = await ConsumeOcrQueue();
+
+            return result;
         }
 
         public List<DocumentBl> GetDocuments()

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using RabbitMq.QueueLibrary;
+using System.Threading;
 
 namespace TesseractOcr
 {
@@ -20,8 +21,23 @@ namespace TesseractOcr
             _queueConsumer.OnReceived += (sender, eventArgs) =>
             {
                 _logger.LogInformation($"Received message {eventArgs.MessageId}");
+                _queueProducer.Send("Extracted Text", eventArgs.MessageId);
             };
             _queueConsumer.StartReceive();
+
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            Console.CancelKeyPress += (sender, e) =>
+            {
+                e.Cancel = true; // Prevent immediate termination
+                cancellationTokenSource.Cancel();
+            };
+
+            while (true)
+            {
+                Thread.Sleep(1000); 
+            }
+
         }
         private void RespondToQueue(string message)
         {

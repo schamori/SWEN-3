@@ -84,11 +84,13 @@ namespace WebApplicationSWEN3.Controllers
                     Filepath = file.FileName
                 };
                 
-                var createdDocument = _bl.CreateDocument(_mapper.Map<DocumentBl>(documentItem));
+                var documentOcr = await _bl.CreateDocument(_mapper.Map<DocumentBl>(documentItem));
 
-                _logger.LogInformation($"Document created successfully with ID: {createdDocument.Id}");
 
-                return CreatedAtAction(nameof(GetDocument), new { id = createdDocument.Id }, createdDocument);
+
+                _logger.LogInformation($"Document Ocr received: {documentOcr}");
+
+                return CreatedAtAction(nameof(GetDocument), new { id = documentItem.Id }, documentItem);
             }
             catch (BL.ValidationException ex)
             {

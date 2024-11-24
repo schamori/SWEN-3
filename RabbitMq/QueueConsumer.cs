@@ -10,7 +10,7 @@ public class QueueConsumer : QueueClient, IQueueConsumer
     private EventingBasicConsumer _consumer;
     private readonly ILogger<QueueConsumer> _logger;
 
-    public QueueConsumer(IOptions<QueueOptions> options, ILogger<QueueConsumer> logger) : base(options.Value.ConnectionString, options.Value.QueueName)
+    public QueueConsumer(QueueOptions options, ILogger<QueueConsumer> logger) : base(options.ConnectionString, options.QueueName)
     {
         _consumer = new EventingBasicConsumer(base.RabbitMqChannel);
         this._logger = logger;
