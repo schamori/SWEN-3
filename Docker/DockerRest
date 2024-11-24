@@ -4,17 +4,12 @@ WORKDIR /app
 
 COPY ./WebApplicationSWEN3/. /app/WebApplicationSWEN3
 COPY ./DAL/. /app/DAL
-
+COPY ./FileStorageService/. /app/FileStorageService
 COPY ./BL/. /app/BL
 
 COPY ./SharedResources/. /app/SharedResources
 
 COPY ./RabbitMq/. /app/RabbitMq
-
-COPY ./TesseractOcr/. /app/TesseractOcr
-
-COPY ./FileStorageService/. /app/FileStorageService
-
 
 # Build the application
 RUN dotnet build ./WebApplicationSWEN3/WebApplicationSWEN3.csproj

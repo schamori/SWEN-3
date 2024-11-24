@@ -11,7 +11,7 @@ namespace BL.Services
     public interface IDocumentServices
     {
         DocumentBl GetDocumentById(Guid id);
-        Task<string> CreateDocument(DocumentBl documentDto);
+        Task<string> CreateDocument(DocumentBl documentDto, Stream stream, string contentType);
         List<DocumentBl> GetDocuments();
         //DocumentDTO UpdateDocument(DocumentBl documentDto);
         bool DeleteDocument(Guid id);

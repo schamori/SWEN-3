@@ -12,6 +12,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\DAL\DAL.csproj" />
+	  <ProjectReference Include="..\FileStorageService\FileStorageService.csproj" />
 		<ProjectReference Include="..\RabbitMq\RabbitMq.csproj" />
 	  <ProjectReference Include="..\SharedResources\SharedResources.csproj" />
 	</ItemGroup>

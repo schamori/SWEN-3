@@ -83,8 +83,8 @@ namespace WebApplicationSWEN3.Controllers
                     Title = file.FileName,
                     Filepath = file.FileName
                 };
-                
-                var documentOcr = await _bl.CreateDocument(_mapper.Map<DocumentBl>(documentItem));
+                using var fileStream = file.OpenReadStream();
+                var documentOcr = await _bl.CreateDocument(_mapper.Map<DocumentBl>(documentItem),fileStream,file.ContentType);
 
 
 

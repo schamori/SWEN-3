@@ -6,6 +6,7 @@ using RabbitMq.QueueLibrary;
 using System;
 using System.Collections.Generic;
 using BL.Validators;
+using FileStorageService.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace BL.Services
@@ -13,16 +14,18 @@ namespace BL.Services
     public class DocumentService : IDocumentServices
     {
         private readonly IDocumentRepo _documentRepo;
+        private readonly IFilesApi _filesApi;
         private readonly IMapper _mapper;
         private readonly IQueueProducer _queueProducer;
         private readonly IQueueConsumer _queueConsumer;
 
-        public DocumentService(IDocumentRepo documentRepo, IMapper mapper, IQueueProducer queueProducer, IQueueConsumer queueConsumer)
+        public DocumentService(IDocumentRepo documentRepo, IMapper mapper, IQueueProducer queueProducer, IQueueConsumer queueConsumer, IFilesApi filesApi)
         {
             _documentRepo = documentRepo;
             _mapper = mapper;
             _queueProducer = queueProducer;
             _queueConsumer = queueConsumer;
+            _filesApi = filesApi;
         }
 
         private async Task<string> ConsumeOcrQueue()
@@ -68,7 +71,7 @@ namespace BL.Services
             return _mapper.Map<DocumentBl>(documentDal);
         }
 
-        public async Task<string> CreateDocument(DocumentBl documentDto)
+        public async Task<string> CreateDocument(DocumentBl documentDto, Stream fileStream, string contentType)
         {
             var validator = new DocumentValidator();
             var results = validator.Validate(documentDto);
@@ -77,6 +80,8 @@ namespace BL.Services
             {
                 throw new ValidationException(results.Errors);
             }
+
+            await _filesApi.UploadAsync(fileStream, documentDto.Filepath, contentType);
 
             var documentDal = _mapper.Map<DocumentDAL>(documentDto);
             _documentRepo.Create(documentDal);

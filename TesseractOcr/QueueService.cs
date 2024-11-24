@@ -21,7 +21,7 @@ namespace TesseractOcr
             _queueConsumer.OnReceived += (sender, eventArgs) =>
             {
                 _logger.LogInformation($"Received message {eventArgs.MessageId}");
-                _queueProducer.Send("Extracted Text", eventArgs.MessageId);
+                _queueProducer.Send(eventArgs.Content, eventArgs.MessageId);
             };
             _queueConsumer.StartReceive();
 

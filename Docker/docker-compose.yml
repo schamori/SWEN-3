@@ -23,6 +23,9 @@ services:
       - "8081:8081"
     networks:
       - paperless-network
+    depends_on:
+      - rabbitmq
+      - paperless-postgres
 
   paperless-webui:
     image: nginx:alpine
