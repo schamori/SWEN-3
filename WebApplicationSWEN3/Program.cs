@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using BL.Services;
+using FileStorageService.Controllers;
 
 namespace WebApplicationSWEN3
 {
@@ -61,6 +62,9 @@ namespace WebApplicationSWEN3
             builder.Services.AddScoped<IDocumentServices, DocumentService>();
 
             builder.Services.AddScoped<IDocumentRepo, DocumentRepo>();
+
+            builder.Services.AddScoped<IFilesApi, FilesApi>();
+
 
             builder.Services.AddSwaggerGen();
             // Configure CORS to allow requests from all origins
