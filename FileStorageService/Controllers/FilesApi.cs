@@ -41,15 +41,19 @@ namespace FileStorageService.Controllers
 
         public async Task<Stream> DownloadFromMinioAsync(string bucketName, string fileName)
         {
-            var stream = new MemoryStream();
+            var downloadStream = new MemoryStream();
 
             await _minioClient.GetObjectAsync(new GetObjectArgs()
                 .WithBucket(bucketName)
                 .WithObject(fileName)
-                .WithCallbackStream(stream.CopyTo));
+                .WithCallbackStream(x =>
+                {
+                    x.CopyTo(downloadStream);
+                    downloadStream.Seek(0, SeekOrigin.Begin);
+                }));
 
-            stream.Position = 0; // Zurücksetzen des Streams
-            return stream;
+            downloadStream.Position = 0; // Zurücksetzen des Streams
+            return downloadStream;
         }
 
     }
