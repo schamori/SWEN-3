@@ -1,34 +1,38 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
 
+# Kopiere die gesamte Lösungsstruktur ins Image
+COPY . .
+
+# Zuerst die gesamte Lösung restoren
+# Ersetze "WebApplicationSWEN3.sln" ggf. mit dem korrekten Namen deiner Solution
+RUN dotnet restore "WebApplicationSWEN3.sln"
+
+# Jetzt das TesseractOcr-Projekt bauen
+RUN dotnet build "TesseractOcr/TesseractOcr.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "TesseractOcr/TesseractOcr.csproj" -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-# Installiere Ghostscript
-RUN apt-get update && apt-get install -y \
-    libc6-dev \
-    tesseract-ocr  \
-    imagemagick \
+# Tesseract und Dependencies installieren
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libleptonica-dev \
+    libtesseract-dev \
     ghostscript \
-    && apt-get clean
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN ln -s /usr/lib/x86_64-linux-gnu/liblept.so.5 /usr/lib/x86_64-linux-gnu/libleptonica-1.82.0.so
+# Symlinks setzen
+RUN ln -s /usr/lib/x86_64-linux-gnu/liblept.so.5 /usr/lib/x86_64-linux-gnu/libleptonica-1.82.0.so && \
+    ln -s /usr/lib/x86_64-linux-gnu/libtesseract.so.5 /usr/lib/x86_64-linux-gnu/libtesseract50.so && \
+    ldconfig
 
-COPY ./TesseractOcr/. /app/TesseractOcr
+# Publish-Output aus dem vorherigen Stage kopieren
+COPY --from=publish /app/publish .
 
-COPY ./RabbitMq/. /app/RabbitMq
-
-
-COPY ./FileStorageService/. /app/FileStorageService
-
-COPY ./ElasticSearch/. /app/ElasticSearch
-COPY ./SharedResources/. /app/SharedResources
-
-
-
-# Build the application
-RUN dotnet build ./TesseractOcr/TesseractOcr.csproj
-# Expose the application port
-EXPOSE 8082
-
-# Run the application
-ENTRYPOINT ["dotnet", "run", "--project", "./TesseractOcr/TesseractOcr.csproj", "--urls", "http://0.0.0.0:8082"]
+# Start
+ENTRYPOINT ["dotnet", "TesseractOcr.dll"]

@@ -18,7 +18,7 @@ public class OcrClient : IOcrClient
 
     }
 
-    public async Task<string> OcrPdf(Stream pdfStream)
+    public async Task<string> OcrPdf(byte[] pdfStream)
     {
         var stringBuilder = new StringBuilder();
 
@@ -34,7 +34,7 @@ public class OcrClient : IOcrClient
                 // Perform OCR on the image
                 using (var tesseractEngine = new TesseractEngine(tessDataPath, language, EngineMode.Default))
                 {
-                    using (var page = tesseractEngine.Process(Pix.LoadFromMemory(magickImage.ToByteArray())))
+                    using (var page = tesseractEngine.Process(Pix.LoadFromMemory(pdfStream)))
                     {
                         var extractedText = page.GetText();
                         stringBuilder.Append(extractedText);

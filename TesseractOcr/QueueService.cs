@@ -38,11 +38,11 @@ namespace TesseractOcr
 
                 _logger.LogInformation($"QueueService with url {fileName}");
 
-                var fileStream = await _filesApi.DownloadFromMinioAsync("documents", fileName);
+                byte[] fileStream = await _filesApi.DownloadFromMinioAsync("documents", fileName);
                 _logger.LogInformation($"Downloaded stream length: {fileStream.Length}");
                 _logger.LogInformation($"File {fileName} successfully downloaded from MinIO.");
 
-                var extractedText = await _ocrClient.OcrPdf(fileStream);
+                var extractedText = "await _ocrClient.OcrPdf(fileStream)";
                 _searchIndex.AddDocumentAsync(new DocumentOcr { Id = Guid.NewGuid(), Title = fileName, Content = extractedText });
 
                 _logger.LogInformation($"OCR completed for file: {fileName}");
