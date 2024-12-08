@@ -90,6 +90,7 @@ services:
 
   elastic_search:
     image: elasticsearch:8.7.1
+    container_name: elastic_search
     environment:
       - discovery.type=single-node
       - cluster.name=docker-cluster
@@ -104,6 +105,7 @@ services:
       - paperless-network 
 
   kibanba:
+    container_name: kibanba
     image: docker.elastic.co/kibana/kibana:8.2.3
     ports:
       - 5601:5601

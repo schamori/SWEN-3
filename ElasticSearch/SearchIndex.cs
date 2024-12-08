@@ -14,7 +14,7 @@ public class ElasticSearchIndex : ISearchIndex
 
     public ElasticSearchIndex(IConfiguration configuration, ILogger<ElasticSearchIndex> logger)
     {
-        this._uri = new Uri(configuration.GetConnectionString("ElasticSearch") ?? "http://localhost:9200/");
+        this._uri = new Uri(configuration.GetConnectionString("ElasticSearch") ?? "http://elastic_search:9200/");
         this._logger = logger;
     }
     public async void AddDocumentAsync(DocumentOcr document)
