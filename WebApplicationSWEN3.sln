@@ -21,9 +21,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocumentTests", "DocumentTe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BL", "BL\BL.csproj", "{C3BA31C2-7843-473F-AD2E-2A1067C8A84B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TesseractOcr", "TesseractOcr\TesseractOcr.csproj", "{A74E1B1C-BD96-436F-96C4-AB78C418387E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TesseractOcr", "TesseractOcr\TesseractOcr.csproj", "{A74E1B1C-BD96-436F-96C4-AB78C418387E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileStorageService", "FileStorageService\FileStorageService.csproj", "{B526BD63-10B2-42B1-872A-1013B8A4D16B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileStorageService", "FileStorageService\FileStorageService.csproj", "{B526BD63-10B2-42B1-872A-1013B8A4D16B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElasticSearch", "ElasticSearch\ElasticSearch.csproj", "{21367EDE-B60A-4CAB-90FA-62A21CECEEA1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -73,6 +75,10 @@ Global
 		{B526BD63-10B2-42B1-872A-1013B8A4D16B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B526BD63-10B2-42B1-872A-1013B8A4D16B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B526BD63-10B2-42B1-872A-1013B8A4D16B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21367EDE-B60A-4CAB-90FA-62A21CECEEA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21367EDE-B60A-4CAB-90FA-62A21CECEEA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21367EDE-B60A-4CAB-90FA-62A21CECEEA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21367EDE-B60A-4CAB-90FA-62A21CECEEA1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

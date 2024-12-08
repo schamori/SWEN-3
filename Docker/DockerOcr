@@ -20,6 +20,10 @@ COPY ./RabbitMq/. /app/RabbitMq
 
 COPY ./FileStorageService/. /app/FileStorageService
 
+COPY ./ElasticSearch/. /app/ElasticSearch
+COPY ./SharedResources/. /app/SharedResources
+
+
 
 # Build the application
 RUN dotnet build ./TesseractOcr/TesseractOcr.csproj

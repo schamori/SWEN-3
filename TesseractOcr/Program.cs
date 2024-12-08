@@ -4,6 +4,7 @@ using RabbitMq.QueueLibrary;
 using TesseractOcr;
 using FileStorageService.Controllers;
 using Minio;
+using ElasticSearch;
 
 string basePath = AppDomain.CurrentDomain.BaseDirectory;
 string folderPath = Path.Combine(basePath, "./", "appsettings.json");
@@ -23,6 +24,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddScoped<ISearchIndex, ElasticSearchIndex>();
+
 builder.Services.AddLogging(logging =>
 {
     logging.ClearProviders();
@@ -36,6 +39,8 @@ builder.Services.AddScoped<OcrOptions>();
 
 var ocrQueueOptions = config.GetSection("QueueOptionsOcr").Get<QueueOptions>();
 var resultQueueOptions = config.GetSection("QueueOptionsResult").Get<QueueOptions>();
+
+
 
 
 // Register QueueProducer with OCR options and logging

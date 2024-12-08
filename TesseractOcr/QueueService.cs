@@ -3,6 +3,8 @@ using RabbitMq.QueueLibrary;
 using System;
 using System.Threading;
 using FileStorageService.Controllers;
+using ElasticSearch;
+using SharedResources.Entities;
 
 namespace TesseractOcr
 {
@@ -13,14 +15,19 @@ namespace TesseractOcr
         private readonly ILogger<QueueConsumer> _logger;
         private readonly IOcrClient _ocrClient;
         private readonly IFilesApi _filesApi;
+        private readonly ISearchIndex _searchIndex;
 
-        public QueueService(IQueueProducer queueProducer, IQueueConsumer queueConsumer, ILogger<QueueConsumer> logger, IOcrClient ocrClient, IFilesApi filesApi)
+        public QueueService(IQueueProducer queueProducer, IQueueConsumer queueConsumer, 
+            ILogger<QueueConsumer> logger, IOcrClient ocrClient, IFilesApi filesApi, ISearchIndex searchIndex
+            )
         {
             _queueProducer = queueProducer;
             _queueConsumer = queueConsumer;
             _logger = logger;
             _ocrClient = ocrClient;
             _filesApi = filesApi;
+            _searchIndex = searchIndex;
+
         }
 
         public void Start() {
@@ -36,6 +43,8 @@ namespace TesseractOcr
                 _logger.LogInformation($"File {fileName} successfully downloaded from MinIO.");
 
                 var extractedText = await _ocrClient.OcrPdf(fileStream);
+                _searchIndex.AddDocumentAsync(new DocumentOcr { Id = Guid.NewGuid(), Title = fileName, Content = extractedText });
+
                 _logger.LogInformation($"OCR completed for file: {fileName}");
 
                 // Ergebnis verarbeiten oder speichern
@@ -55,7 +64,7 @@ namespace TesseractOcr
 
             while (true)
             {
-                Thread.Sleep(1000); 
+                Thread.Sleep(100); 
             }
 
         }
