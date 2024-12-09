@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using BL.Services;
 using FileStorageService.Controllers;
 using System.Text;
+using ElasticSearch;
 
 namespace DocumentTests
 {
@@ -22,6 +23,7 @@ namespace DocumentTests
         private Mock<IQueueConsumer> _mockQueueConsumer;
         private Mock<IFilesApi> _filesApi;
         private DocumentService _service;
+        private Mock<ISearchIndex> _searchIndex;
 
         [SetUp]
         public void SetUp()
@@ -31,7 +33,8 @@ namespace DocumentTests
             _mockQueueProducer = new Mock<IQueueProducer>();
             _mockQueueConsumer = new Mock<IQueueConsumer>();
             _filesApi = new Mock<IFilesApi>();
-            _service = new DocumentService(_mockRepo.Object, _mockMapper.Object, _mockQueueProducer.Object, _mockQueueConsumer.Object, _filesApi.Object);
+            _searchIndex = new Mock<ISearchIndex>();
+            _service = new DocumentService(_mockRepo.Object, _mockMapper.Object, _mockQueueProducer.Object, _mockQueueConsumer.Object, _filesApi.Object, _searchIndex.Object);
         }
 
 
