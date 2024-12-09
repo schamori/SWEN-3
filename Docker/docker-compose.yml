@@ -97,7 +97,7 @@ services:
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - "xpack.security.enabled=false"
-      - "xpack.security.enrollment.enabled=false"
+      - "xpack.security.enrollment.enabled=true"
     ports:
       - 9200:9200
       - 9300:9300

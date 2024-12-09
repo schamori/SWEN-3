@@ -8,6 +8,7 @@ using RabbitMq.QueueLibrary;
 using SharedResources.DTO;
 using FluentValidation;
 using BL;
+using ElasticSearch;
 
 namespace WebApplicationSWEN3.Controllers
 {
@@ -27,6 +28,34 @@ namespace WebApplicationSWEN3.Controllers
             _mapper = mapper;
             _queueProducer = queueProducer;
             _logger = logger;
+            
+        }
+
+        [HttpGet("Search")]
+
+        public IActionResult SearchDocuments([FromQuery] string? query)
+        {
+            try
+            {
+                _logger.LogInformation("Searching for documents with query parameters.");
+
+                // Example: Filter documents based on the provided query parameters.
+                var documents = _bl.SearchDocuments(query!);
+
+
+                if (!documents.Any())
+                {
+                    _logger.LogWarning("No documents found matching the search criteria.");
+                    return NotFound("No documents found matching the search criteria.");
+                }
+
+                return Ok(documents);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while searching for documents.");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
         // GET: /Document
@@ -68,7 +97,7 @@ namespace WebApplicationSWEN3.Controllers
                 return StatusCode(500, "Internal server error.");
             }
         }
-
+        
         // POST: /Document
         [HttpPost]
         public async Task<ActionResult<DocumentDTO>> PostDocument([FromForm] IFormFile file)

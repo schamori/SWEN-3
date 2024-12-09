@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using BL.Services;
 using FileStorageService.Controllers;
 using Minio;
-
+using ElasticSearch;
 namespace WebApplicationSWEN3
 {
     public class Program
@@ -54,6 +54,8 @@ namespace WebApplicationSWEN3
                 var logger = provider.GetRequiredService<ILogger<QueueProducer>>();
                 return new QueueProducer(ocrQueueOptions, logger);
             });
+
+            builder.Services.AddScoped<ISearchIndex, ElasticSearchIndex>();
 
             // Register QueueConsumer with Result options and logging
             builder.Services.AddScoped<IQueueConsumer>(provider =>
