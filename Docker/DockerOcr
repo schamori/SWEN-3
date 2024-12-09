@@ -5,7 +5,6 @@ WORKDIR /src
 COPY . .
 
 # Zuerst die gesamte Lösung restoren
-# Ersetze "WebApplicationSWEN3.sln" ggf. mit dem korrekten Namen deiner Solution
 RUN dotnet restore "WebApplicationSWEN3.sln"
 
 # Jetzt das TesseractOcr-Projekt bauen
@@ -27,9 +26,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Symlinks setzen
-RUN ln -s /usr/lib/x86_64-linux-gnu/liblept.so.5 /usr/lib/x86_64-linux-gnu/libleptonica-1.82.0.so && \
-    ln -s /usr/lib/x86_64-linux-gnu/libtesseract.so.5 /usr/lib/x86_64-linux-gnu/libtesseract50.so && \
-    ldconfig
+# RUN ln -s /usr/lib/x86_64-linux-gnu/liblept.so.5 /usr/lib/x86_64-linux-gnu/libleptonica-1.82.0.so && \
+#    ln -s /usr/lib/x86_64-linux-gnu/libtesseract.so.5 /usr/lib/x86_64-linux-gnu/libtesseract50.so && \
+#    ln -s /usr/lib/x86_64-linux-gnu/libdl.so.2 /usr/lib/x86_64-linux-gnu/libdl.so && \
+#    ldconfig
+
+WORKDIR /app/x64
+
+RUN ln -s /usr/lib/x86_64-linux-gnu/libdl.so.2 /usr/lib/x86_64-linux-gnu/libdl.so && \
+    ln -s /usr/lib/x86_64-linux-gnu/liblept.so.5 /app/x64/libleptonica-1.82.0.so && \
+    ln -s /usr/lib/x86_64-linux-gnu/libtesseract.so.5 /app/x64/libtesseract50.so
+
+WORKDIR /app
 
 # Publish-Output aus dem vorherigen Stage kopieren
 COPY --from=publish /app/publish .

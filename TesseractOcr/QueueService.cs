@@ -42,7 +42,7 @@ namespace TesseractOcr
                 _logger.LogInformation($"Downloaded stream length: {fileStream.Length}");
                 _logger.LogInformation($"File {fileName} successfully downloaded from MinIO.");
 
-                var extractedText = "await _ocrClient.OcrPdf(fileStream)";
+                var extractedText = await _ocrClient.OcrPdf(fileStream);
                 _searchIndex.AddDocumentAsync(new DocumentOcr { Id = messageId, Title = fileName, Content = extractedText });
 
                 _logger.LogInformation($"OCR completed for file: {fileName}");
