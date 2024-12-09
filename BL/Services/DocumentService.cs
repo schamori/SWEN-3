@@ -100,21 +100,6 @@ namespace BL.Services
             return _mapper.Map<List<DocumentBl>>(documents);
         }
 
-        /*public DocumentDTO UpdateDocument(DocumentBl documentDto)
-        {
-            var documentDal = _documentRepo.Read(documentDto.Id);
-
-            if (documentDal == null)
-            {
-                return null;
-            }
-
-            _mapper.Map(documentDto, documentDal);
-
-            _documentRepo.Update(documentDal);
-
-            return documentDto;
-        }*/
 
         public bool DeleteDocument(Guid id)
         {
