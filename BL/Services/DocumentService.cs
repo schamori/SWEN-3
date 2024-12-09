@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using BL.Validators;
 using FileStorageService.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using ElasticSearch;
 
 namespace BL.Services
 {
@@ -18,14 +19,15 @@ namespace BL.Services
         private readonly IMapper _mapper;
         private readonly IQueueProducer _queueProducer;
         private readonly IQueueConsumer _queueConsumer;
-
-        public DocumentService(IDocumentRepo documentRepo, IMapper mapper, IQueueProducer queueProducer, IQueueConsumer queueConsumer, IFilesApi filesApi)
+        private readonly ISearchIndex _searchIndex;
+        public DocumentService(IDocumentRepo documentRepo, IMapper mapper, IQueueProducer queueProducer, IQueueConsumer queueConsumer, IFilesApi filesApi, ISearchIndex searchIndex)
         {
             _documentRepo = documentRepo;
             _mapper = mapper;
             _queueProducer = queueProducer;
             _queueConsumer = queueConsumer;
             _filesApi = filesApi;
+            _searchIndex = searchIndex;
         }
 
         private async Task<string> ConsumeOcrQueue()
@@ -71,6 +73,8 @@ namespace BL.Services
             return _mapper.Map<DocumentBl>(documentDal);
         }
 
+        
+
         public async Task<string> CreateDocument(DocumentBl documentDto, Stream fileStream, string contentType)
         {
             var validator = new DocumentValidator();
@@ -100,21 +104,6 @@ namespace BL.Services
             return _mapper.Map<List<DocumentBl>>(documents);
         }
 
-        /*public DocumentDTO UpdateDocument(DocumentBl documentDto)
-        {
-            var documentDal = _documentRepo.Read(documentDto.Id);
-
-            if (documentDal == null)
-            {
-                return null;
-            }
-
-            _mapper.Map(documentDto, documentDal);
-
-            _documentRepo.Update(documentDal);
-
-            return documentDto;
-        }*/
 
         public bool DeleteDocument(Guid id)
         {
@@ -131,6 +120,12 @@ namespace BL.Services
         public void SendToQueue(string filePath, Guid documentId)
         {
             _queueProducer.Send(filePath, documentId);
+        }
+
+        public List<DocumentBl> SearchDocuments(string query)
+        {
+            return _mapper.Map < List < DocumentBl >> (_searchIndex.SearchDocumentAsync(query).Select(doc => _documentRepo.Read(doc.Id)).ToList());
+
         }
     }
 }

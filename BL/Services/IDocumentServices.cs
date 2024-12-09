@@ -16,6 +16,9 @@ namespace BL.Services
         //DocumentDTO UpdateDocument(DocumentBl documentDto);
         bool DeleteDocument(Guid id);
         void SendToQueue(string filePath, Guid documentId);
+
+        List<DocumentBl> SearchDocuments(string query);
+
     }
   
 

@@ -5,6 +5,7 @@ using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.QueryDsl;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Nest;
 using SharedResources.Entities;
 
 public class ElasticSearchIndex : ISearchIndex
@@ -19,6 +20,8 @@ public class ElasticSearchIndex : ISearchIndex
     }
     public async void AddDocumentAsync(DocumentOcr document)
     {
+        _logger.LogInformation($"Indexing Docuemnt : {document}");
+
         var elasticClient = new ElasticsearchClient(_uri);
 
         if (!elasticClient.Indices.Exists("documents").Exists)
@@ -44,7 +47,8 @@ public class ElasticSearchIndex : ISearchIndex
             .Index("documents")
             .Query(q => q.QueryString(qs => qs.DefaultField(p => p.Content).Query($"*{searchTerm}*")))
         );
-
+        _logger.LogInformation($"Search took: {searchResponse.Took}");
+        _logger.LogInformation($"Total hits: {searchResponse.Total}");
         return searchResponse.Documents;
     }
 }
