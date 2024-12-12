@@ -29,15 +29,26 @@ public class OcrClient : IOcrClient
             {
                 // Set the resolution and format of the image (adjust as needed)
                 magickImage.Density = new Density(300, 300);
+                //magickImage.ColorType = ColorType.Grayscale;
                 magickImage.Format = MagickFormat.Png;
 
                 // Perform OCR on the image
-                using (var tesseractEngine = new TesseractEngine(tessDataPath, language, EngineMode.Default))
+                using (var memoryStream = new MemoryStream())
                 {
-                    using (var page = tesseractEngine.Process(Pix.LoadFromMemory(pdfStream)))
+                    magickImage.Write(memoryStream);
+                    memoryStream.Position = 0;
+
+                    using (var pix = Pix.LoadFromMemory(memoryStream.ToArray()))
                     {
-                        var extractedText = page.GetText();
-                        stringBuilder.Append(extractedText);
+                        using (var tesseractEngine = new TesseractEngine(tessDataPath, language, EngineMode.Default))
+                        {
+                            using (var page = tesseractEngine.Process(pix))
+                            {
+                                // Extrahiere den Text aus der Seite
+                                var extractedText = page.GetText();
+                                stringBuilder.Append(extractedText);
+                            }
+                        }
                     }
                 }
             }
