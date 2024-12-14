@@ -132,66 +132,36 @@ namespace WebApplicationSWEN3.Controllers
                 return StatusCode(500, "Internal server error.");
             }
         }
-
-        /* 
-        // DELETE: /Document/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDocument(Guid id)
+        [HttpGet("download/{document_id}")]
+        public async Task<ActionResult> DownloadDocument(Guid document_id)
         {
             try
             {
-                _logger.LogInformation($"Deleting document with ID: {id}");
-                var document = _documentRepo.Read(id);
-
+                var document = _bl.GetDocumentById(document_id);
                 if (document == null)
                 {
-                    _logger.LogWarning($"Document with ID: {id} not found for deletion.");
-                    return NotFound("Document not found.");
+                    _logger.LogWarning($"Document with ID: {document_id} not found.");
+                    return NotFound($"Document with ID {document_id} not found!");
+                }
+                _logger.LogInformation($"Downloading document with ID: {document_id}");
+                var documentFile = await _bl.GetDocumentFile(document_id);
+                if (documentFile == null)
+                {
+                    _logger.LogWarning($"Document with ID: {document_id} not found.");
+                    return NotFound($"Document with ID {document_id} not found!");
                 }
 
-                _documentRepo.Delete(id);
-                _logger.LogInformation($"Document with ID: {id} deleted successfully.");
-                return NoContent();
+                var contentType = "application/pdf";
+
+                return File(documentFile, contentType, document.Filepath);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while deleting document with ID: {id}");
+                _logger.LogError(ex, $"An error occurred while downloading document with ID: {document_id}");
                 return StatusCode(500, "Internal server error.");
             }
         }
 
-        // PUT: /Document/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutDocument(Guid id, [FromBody] DocumentDTO documentDto)
-        {
-            try
-            {
-                _logger.LogInformation($"Updating document with ID: {id}");
 
-                if (id != documentDto.Id)
-                {
-                    _logger.LogWarning($"Document ID in the URL ({id}) does not match the document ID in the body ({documentDto.Id}).");
-                    return BadRequest("Document ID mismatch.");
-                }
-
-                var documentBl = _mapper.Map<DocumentBl>(documentDto);
-                var updatedDocument = _documentRepo.Update(_mapper.Map<DocumentDAL>(documentBl));
-
-                if (updatedDocument == null)
-                {
-                    _logger.LogWarning($"Document with ID: {id} not found for update.");
-                    return NotFound("Document not found.");
-                }
-
-                _logger.LogInformation($"Document with ID: {id} updated successfully.");
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"An error occurred while updating document with ID: {id}");
-                return StatusCode(500, "Internal server error.");
-            }
-        }
-        */
     }
 }

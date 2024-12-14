@@ -85,7 +85,7 @@ namespace BL.Services
                 throw new ValidationException(results.Errors);
             }
 
-            await _filesApi.UploadAsync(fileStream, documentDto.Filepath, contentType);
+            await _filesApi.UploadAsync(fileStream, documentDto.Id.ToString(), contentType);
 
             var documentDal = _mapper.Map<DocumentDAL>(documentDto);
             _documentRepo.Create(documentDal);
@@ -126,6 +126,11 @@ namespace BL.Services
         {
             return _mapper.Map < List < DocumentBl >> (_searchIndex.SearchDocumentAsync(query).Select(doc => _documentRepo.Read(doc.Id)).ToList());
 
+        }
+
+        public async Task<byte[]> GetDocumentFile(Guid id)
+        {
+            return await _filesApi.DownloadFromMinioAsync("documents", id.ToString());
         }
     }
 }

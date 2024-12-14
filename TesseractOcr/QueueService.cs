@@ -38,7 +38,7 @@ namespace TesseractOcr
 
                 _logger.LogInformation($"QueueService with url {fileName}");
 
-                byte[] fileStream = await _filesApi.DownloadFromMinioAsync("documents", fileName);
+                byte[] fileStream = await _filesApi.DownloadFromMinioAsync("documents", messageId.ToString());
                 _logger.LogInformation($"Downloaded stream length: {fileStream.Length}");
                 _logger.LogInformation($"File {fileName} successfully downloaded from MinIO.");
 

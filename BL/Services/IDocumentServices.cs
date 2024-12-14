@@ -19,7 +19,11 @@ namespace BL.Services
 
         List<DocumentBl> SearchDocuments(string query);
 
+        Task<byte[]> GetDocumentFile(Guid id);
+
     }
-  
+
+    
+
 
 }
