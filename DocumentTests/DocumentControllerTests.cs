@@ -233,5 +233,95 @@ namespace DocumentTests
 
         #endregion
 
+
+        #region SearchDocuments Tests
+
+        [Test]
+        public void SearchDocuments_ShouldReturnOk_WithDocuments_WhenDocumentsExist()
+        {
+            // Arrange
+            var query = "test";
+            var documents = new List<DocumentBl>
+    {
+        new DocumentBl { Id = Guid.NewGuid(), Title = "Doc1", Filepath = "path1.pdf" },
+        new DocumentBl { Id = Guid.NewGuid(), Title = "Doc2", Filepath = "path2.pdf" }
+    };
+            _mockService.Setup(s => s.SearchDocuments(query)).Returns(documents);
+
+            // Act
+            var result = _controller.SearchDocuments(query) as OkObjectResult;
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(200, result.StatusCode);
+            Assert.AreEqual(documents, result.Value);
+            _mockService.Verify(s => s.SearchDocuments(query), Times.Once);
+        }
+
+        [Test]
+        public void SearchDocuments_ShouldReturnNotFound_WhenNoDocumentsFound()
+        {
+            // Arrange
+            var query = "nonexistent";
+            var documents = new List<DocumentBl>();
+            _mockService.Setup(s => s.SearchDocuments(query)).Returns(documents);
+
+            // Act
+            var result = _controller.SearchDocuments(query) as NotFoundObjectResult;
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(404, result.StatusCode);
+            Assert.AreEqual("No documents found matching the search criteria.", result.Value);
+            _mockService.Verify(s => s.SearchDocuments(query), Times.Once);
+        }
+
+        #endregion
+
+        #region DownloadDocument Tests
+
+        [Test]
+        public async Task DownloadDocument_ShouldReturnFile_WhenDocumentExistsAndFileExists()
+        {
+            // Arrange
+            var documentId = Guid.NewGuid();
+            var document = new DocumentBl { Id = documentId, Title = "Doc1", Filepath = "path1.pdf" };
+            var fileBytes = Encoding.UTF8.GetBytes("Dummy file content");
+
+            _mockService.Setup(s => s.GetDocumentById(documentId)).Returns(document);
+            _mockService.Setup(s => s.GetDocumentFile(documentId)).ReturnsAsync(fileBytes);
+
+            // Act
+            var result = await _controller.DownloadDocument(documentId) as FileContentResult;
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual("application/pdf", result.ContentType);
+            Assert.AreEqual(document.Filepath, result.FileDownloadName);
+            Assert.AreEqual(fileBytes, result.FileContents);
+            _mockService.Verify(s => s.GetDocumentById(documentId), Times.Once);
+            _mockService.Verify(s => s.GetDocumentFile(documentId), Times.Once);
+        }
+
+        [Test]
+        public async Task DownloadDocument_ShouldReturnNotFound_WhenDocumentDoesNotExist()
+        {
+            // Arrange
+            var documentId = Guid.NewGuid();
+            _mockService.Setup(s => s.GetDocumentById(documentId)).Returns((DocumentBl)null);
+
+            // Act
+            var result = await _controller.DownloadDocument(documentId) as NotFoundObjectResult;
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(404, result.StatusCode);
+            Assert.AreEqual($"Document with ID {documentId} not found!", result.Value);
+            _mockService.Verify(s => s.GetDocumentById(documentId), Times.Once);
+            _mockService.Verify(s => s.GetDocumentFile(It.IsAny<Guid>()), Times.Never);
+        }
+
+        #endregion
+
     }
 }

@@ -8,6 +8,7 @@ using SharedResources.Entities;
 
 namespace BL.Services
 {
+
     public interface IDocumentServices
     {
         DocumentBl GetDocumentById(Guid id);

@@ -11,6 +11,8 @@ using BL.Services;
 using FileStorageService.Controllers;
 using System.Text;
 using ElasticSearch;
+using Microsoft.OpenApi.Services;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Interfaces;
 
 namespace DocumentTests
 {
@@ -132,11 +134,13 @@ namespace DocumentTests
             Assert.IsNotNull(ex);
             Assert.AreEqual("Upload failed", ex.Message);
 
-            _filesApi.Verify(f => f.UploadAsync(fileStream, documentDto.Filepath, contentType), Times.Once);
+            // Verifikation der erwarteten Aufrufe
+            _filesApi.Verify(f => f.UploadAsync(fileStream, documentDto.Id.ToString(), contentType), Times.Once);
             _mockRepo.Verify(r => r.Create(It.IsAny<DocumentDAL>()), Times.Never);
             _mockQueueProducer.Verify(q => q.Send(It.IsAny<string>(), It.IsAny<Guid>()), Times.Never);
             _mockQueueConsumer.Verify(qc => qc.StartReceive(), Times.Never);
         }
+
 
         #endregion
 
@@ -196,5 +200,218 @@ namespace DocumentTests
         }
 
         #endregion
+
+        #region GetDocumentById Tests
+
+        [Test]
+        public void GetDocumentById_ShouldReturnDocument_WhenDocumentExists()
+        {
+            // Arrange
+            var documentId = Guid.NewGuid();
+            var documentDal = new DocumentDAL { Id = documentId, Title = "Doc1", Filepath = "path1.pdf" };
+            var documentBl = new DocumentBl { Id = documentDal.Id, Title = documentDal.Title, Filepath = documentDal.Filepath };
+
+            _mockRepo.Setup(r => r.Read(documentId)).Returns(documentDal);
+            _mockMapper.Setup(m => m.Map<DocumentBl>(documentDal)).Returns(documentBl);
+
+            // Act
+            var result = _service.GetDocumentById(documentId);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(documentBl.Id, result.Id);
+            Assert.AreEqual(documentBl.Title, result.Title);
+            Assert.AreEqual(documentBl.Filepath, result.Filepath);
+
+            _mockRepo.Verify(r => r.Read(documentId), Times.Once);
+            _mockMapper.Verify(m => m.Map<DocumentBl>(documentDal), Times.Once);
+        }
+
+        #endregion
+
+        #region CreateDocument Tests
+
+        [Test]
+        public async Task CreateDocument_ValidInput_ReturnsOcrResult()
+        {
+            // Arrange
+            var documentDto = new DocumentBl
+            {
+                Id = Guid.NewGuid(),
+                Title = "validPath",
+                Filepath = "path/to/file.txt",
+                // Weitere erforderliche Eigenschaften setzen
+            };
+
+            var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Dummy file content"));
+            string contentType = "text/plain";
+
+            var documentDal = new DocumentDAL
+            {
+                Id = documentDto.Id,
+                Title = documentDto.Title,
+                Filepath = documentDto.Filepath,
+                // Weitere erforderliche Eigenschaften setzen
+            };
+
+            var ocrResult = "OCR processed text";
+
+            _mockMapper.Setup(m => m.Map<DocumentDAL>(documentDto)).Returns(documentDal);
+
+            _filesApi.Setup(f => f.UploadAsync(fileStream, documentDto.Id.ToString(), contentType))
+                     .Returns(Task.CompletedTask)
+                     .Verifiable();
+
+            _mockRepo.Setup(r => r.Create(documentDal)).Verifiable();
+
+            _mockQueueProducer.Setup(q => q.Send(documentDto.Filepath, documentDto.Id)).Verifiable();
+
+            _mockQueueConsumer.Setup(qc => qc.StartReceive()).Verifiable();
+
+            // Korrigierte Setup für das OnReceived-Event mit korrektem EventArgs-Typ und notwendigen Parametern
+            _mockQueueConsumer.SetupAdd(qc => qc.OnReceived += It.IsAny<EventHandler<RabbitMq.QueueLibrary.QueueReceivedEventArgs>>())
+                               .Callback<EventHandler<RabbitMq.QueueLibrary.QueueReceivedEventArgs>>(handler =>
+                               {
+                                   // Simuliere den Empfang einer Nachricht
+                                   var args = new RabbitMq.QueueLibrary.QueueReceivedEventArgs("OCR processed text", documentDto.Id);
+                                   handler.Invoke(this, args);
+                               });
+
+            // Act
+            var result = await _service.CreateDocument(documentDto, fileStream, contentType);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(ocrResult, result);
+
+            _filesApi.Verify(f => f.UploadAsync(fileStream, documentDto.Id.ToString(), contentType), Times.Once);
+            _mockRepo.Verify(r => r.Create(documentDal), Times.Once);
+            _mockQueueProducer.Verify(q => q.Send(documentDto.Filepath, documentDto.Id), Times.Once);
+            _mockQueueConsumer.Verify(qc => qc.StartReceive(), Times.Once);
+        }
+
+        #endregion
+
+        #region SearchDocuments Tests
+
+        [Test]
+        public void SearchDocuments_ShouldReturnDocuments_WhenMatchesFound()
+        {
+            // Arrange
+            var query = "test";
+
+            // Angenommen, SearchDocumentAsync gibt eine Liste von DocumentOcr zurück, die eine Id-Eigenschaft hat
+            var searchResults = new List<DocumentOcr>
+            {
+                new DocumentOcr { Id = Guid.NewGuid(), Title="Title", Content="Content" },
+                new DocumentOcr { Id = Guid.NewGuid(), Title="Title", Content="Content" }
+            };
+
+            _searchIndex.Setup(s => s.SearchDocumentAsync(query))
+                        .Returns(searchResults);
+
+            // Setup des Repositories zum Lesen der Dokumente
+            var documentDal1 = new DocumentDAL { Id = searchResults[0].Id, Title = "Doc1", Filepath = "path1.pdf" };
+            var documentDal2 = new DocumentDAL { Id = searchResults[1].Id, Title = "Doc2", Filepath = "path2.pdf" };
+            _mockRepo.Setup(r => r.Read(searchResults[0].Id)).Returns(documentDal1);
+            _mockRepo.Setup(r => r.Read(searchResults[1].Id)).Returns(documentDal2);
+
+            var expectedDocuments = new List<DocumentBl>
+            {
+                new DocumentBl { Id = documentDal1.Id, Title = documentDal1.Title, Filepath = documentDal1.Filepath },
+                new DocumentBl { Id = documentDal2.Id, Title = documentDal2.Title, Filepath = documentDal2.Filepath }
+            };
+
+            _mockMapper.Setup(m => m.Map<List<DocumentBl>>(It.IsAny<List<DocumentDAL>>()))
+                       .Returns(expectedDocuments);
+
+            // Act
+            var result = _service.SearchDocuments(query);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(expectedDocuments[0].Id, result[0].Id);
+            Assert.AreEqual(expectedDocuments[1].Title, result[1].Title);
+
+            _searchIndex.Verify(s => s.SearchDocumentAsync(query), Times.Once);
+            _mockRepo.Verify(r => r.Read(searchResults[0].Id), Times.Once);
+            _mockRepo.Verify(r => r.Read(searchResults[1].Id), Times.Once);
+            _mockMapper.Verify(m => m.Map<List<DocumentBl>>(It.IsAny<List<DocumentDAL>>()), Times.Once);
+        }
+
+        [Test]
+        public void SearchDocuments_ShouldReturnEmptyList_WhenNoMatchesFound()
+        {
+            // Arrange
+            var query = "nonexistent";
+            var searchResults = new List<DocumentOcr>();
+
+            _searchIndex.Setup(s => s.SearchDocumentAsync(query))
+                        .Returns(searchResults);
+
+            _mockMapper.Setup(m => m.Map<List<DocumentBl>>(It.IsAny<List<DocumentDAL>>()))
+                       .Returns(new List<DocumentBl>());
+
+            // Act
+            var result = _service.SearchDocuments(query);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(0, result.Count);
+
+            _searchIndex.Verify(s => s.SearchDocumentAsync(query), Times.Once);
+            _mockRepo.Verify(r => r.Read(It.IsAny<Guid>()), Times.Never);
+            _mockMapper.Verify(m => m.Map<List<DocumentBl>>(It.IsAny<List<DocumentDAL>>()), Times.Once);
+        }
+
+        #endregion
+
+        #region GetDocumentFile Tests
+
+        [Test]
+        public async Task GetDocumentFile_ShouldReturnFileBytes_WhenFileExists()
+        {
+            // Arrange
+            var documentId = Guid.NewGuid();
+            var fileBytes = Encoding.UTF8.GetBytes("Dummy file content");
+
+            _filesApi.Setup(f => f.DownloadFromMinioAsync("documents", documentId.ToString()))
+                     .ReturnsAsync(fileBytes);
+
+            // Act
+            var result = await _service.GetDocumentFile(documentId);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(fileBytes, result);
+
+            _filesApi.Verify(f => f.DownloadFromMinioAsync("documents", documentId.ToString()), Times.Once);
+        }
+
+        [Test]
+        public void GetDocumentFile_ShouldThrowException_WhenDownloadFails()
+        {
+            // Arrange
+            var documentId = Guid.NewGuid();
+
+            _filesApi.Setup(f => f.DownloadFromMinioAsync("documents", documentId.ToString()))
+                     .ThrowsAsync(new Exception("Download failed"));
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(async () =>
+                await _service.GetDocumentFile(documentId)
+            );
+
+            Assert.IsNotNull(ex);
+            Assert.AreEqual("Download failed", ex.Message);
+
+            _filesApi.Verify(f => f.DownloadFromMinioAsync("documents", documentId.ToString()), Times.Once);
+        }
+
+        #endregion
+
+
+
     }
 }

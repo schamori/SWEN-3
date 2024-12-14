@@ -3,9 +3,11 @@ using SharedResources.Entities;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Reflection.Metadata;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DAL.Persistence
 {
+    [ExcludeFromCodeCoverage]
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)

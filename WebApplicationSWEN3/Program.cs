@@ -12,6 +12,7 @@ using BL.Services;
 using FileStorageService.Controllers;
 using Minio;
 using ElasticSearch;
+using System.Diagnostics.CodeAnalysis;
 namespace WebApplicationSWEN3
 {
     public class Program
