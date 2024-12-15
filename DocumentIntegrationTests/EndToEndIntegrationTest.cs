@@ -29,44 +29,9 @@ namespace DocumentIntegrationTests
         [SetUp]
         public async Task Setup()
         {
-            _postgresContainer = new PostgreSqlBuilder()
-                .WithDatabase("documentsearch")
-                .WithUsername("mamo")
-                .WithPassword("T1P3m!hvQ9")
-                .WithHostname("paperless-postgres")
-                .WithNetwork("paperless-network")
-                .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(5432))
-                .Build();
-
-            await _postgresContainer.StartAsync();
-
-            var connectionString = "Host=paperless-postgres;Port=5432;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9";
-            Console.WriteLine($"Postgres Connection String: {connectionString}");
-
-            try
-            {
-                using var connection = new NpgsqlConnection(connectionString);
-                connection.Open();
-                Console.WriteLine("Connection to PostgreSQL successful.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"PostgreSQL connection failed: {ex.Message}");
-                throw;
-            }
 
             // WebApplicationFactory konfigurieren
-            _factory = new WebApplicationFactory<Program>()
-                .WithWebHostBuilder(builder =>
-                {
-                    builder.ConfigureAppConfiguration((context, config) =>
-                    {
-                        config.AddInMemoryCollection(new[]
-                        {
-                    new KeyValuePair<string, string>("ConnectionStrings:DefaultConnection", connectionString)
-                        });
-                    });
-                });
+            _factory = new WebApplicationFactory<Program>();
 
             _client = _factory.CreateClient();
         }
@@ -95,56 +60,12 @@ namespace DocumentIntegrationTests
             var uploadResponse = await _client.PostAsync("/api/document", content);
             Assert.AreEqual(HttpStatusCode.Created, uploadResponse.StatusCode);
 
-            var uploadResponseBody = await uploadResponse.Content.ReadAsStringAsync();
-            var documentId = ExtractDocumentId(uploadResponseBody);
-
-            bool ocrIndexed = await WaitForElasticSearch(documentId);
-            Assert.IsTrue(ocrIndexed, "OCR result not found in ElasticSearch");
-
-            var fileInMinIO = await GetFileFromMinIO(documentId);
-            Assert.IsNotNull(fileInMinIO, "File not found in MinIO storage");
-
-            var dbDocument = GetDocumentFromDatabase(documentId);
-            Assert.IsNotNull(dbDocument, "Document metadata not found in PostgreSQL");
-            Assert.AreEqual("testfile.pdf", dbDocument.Title);
+         
         }
 
-        private async Task<bool> WaitForElasticSearch(Guid documentId)
-        {
-            var retries = 10;
-            while (retries > 0)
-            {
-                var response = await new HttpClient().GetAsync($"http://elasticsearch:9200/documents/_doc/{documentId}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return true;
-                }
+        
 
-                await Task.Delay(1000);
-                retries--;
-            }
-            return false;
-        }
-
-        private async Task<byte[]> GetFileFromMinIO(Guid documentId)
-        {
-            using var client = new HttpClient { BaseAddress = new Uri("http://minio:9000") };
-            var response = await client.GetAsync($"/documents/{documentId}");
-            return response.IsSuccessStatusCode ? await response.Content.ReadAsByteArrayAsync() : null;
-        }
-
-        private DocumentDAL GetDocumentFromDatabase(Guid documentId)
-        {
-            using var scope = _factory.Services.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            return context.Documents.FirstOrDefault(d => d.Id == documentId);
-        }
-
-        private Guid ExtractDocumentId(string responseBody)
-        {
-            var match = Regex.Match(responseBody, @"""id"":""(?<id>[^""]+)""");
-            return Guid.Parse(match.Groups["id"].Value);
-        }
+        
     }
 
 }

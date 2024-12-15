@@ -1,0 +1,21 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy the solution and all projects
+COPY . .
+
+# Restore dependencies
+RUN dotnet restore "WebApplicationSWEN3.sln"
+
+# Build the integration tests project
+RUN dotnet build "DocumentIntegrationTests/DocumentIntegrationTests.csproj" -c Release -o /app/build
+
+# Create a new stage for running tests
+FROM build AS testrunner
+WORKDIR /app/tests
+
+# Copy the built test files
+COPY --from=build /app/build .
+
+# Set the entry point to run the tests
+ENTRYPOINT ["dotnet", "test", "DocumentIntegrationTests.dll"]
