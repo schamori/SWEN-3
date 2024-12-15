@@ -100,7 +100,8 @@ namespace WebApplicationSWEN3.Controllers
         
         // POST: /Document
         [HttpPost]
-        public async Task<ActionResult<DocumentDTO>> PostDocument([FromForm] IFormFile file)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<DocumentDTO>> PostDocument([FromForm] DocumentUploadDto uploadDto)
         {
             try
             {
@@ -109,11 +110,11 @@ namespace WebApplicationSWEN3.Controllers
                 var documentItem = new DocumentDTO
                 {
                     Id = Guid.NewGuid(),
-                    Title = file.FileName,
-                    Filepath = file.FileName
+                    Title = uploadDto.File.FileName,
+                    Filepath = uploadDto.File.FileName
                 };
-                using var fileStream = file.OpenReadStream();
-                var documentOcr = await _bl.CreateDocument(_mapper.Map<DocumentBl>(documentItem),fileStream,file.ContentType);
+                using var fileStream = uploadDto.File.OpenReadStream();
+                var documentOcr = await _bl.CreateDocument(_mapper.Map<DocumentBl>(documentItem),fileStream,uploadDto.File.ContentType);
 
 
 

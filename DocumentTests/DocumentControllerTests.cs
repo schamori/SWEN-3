@@ -131,6 +131,11 @@ namespace DocumentTests
             fileMock.Setup(_ => _.Length).Returns(memoryStream.Length);
             fileMock.Setup(_ => _.ContentType).Returns("text/plain");
 
+            var uploadDto = new DocumentUploadDto
+            {
+                File = fileMock.Object
+            };
+
             var documentDto = new DocumentDTO
             {
                 Id = Guid.NewGuid(),
@@ -166,7 +171,7 @@ namespace DocumentTests
                         .ReturnsAsync("OCR processed text");
 
             // Act
-            var actionResult = await _controller.PostDocument(fileMock.Object);
+            var actionResult = await _controller.PostDocument(uploadDto);
 
             // Assert
             Assert.IsInstanceOf<CreatedAtActionResult>(actionResult.Result);
@@ -199,6 +204,11 @@ namespace DocumentTests
             fileMock.Setup(_ => _.Length).Returns(memoryStream.Length);
             fileMock.Setup(_ => _.ContentType).Returns("text/plain");
 
+            var uploadDto = new DocumentUploadDto
+            {
+                File = fileMock.Object
+            };
+
             var documentDto = new DocumentDTO
             {
                 Id = Guid.NewGuid(),
@@ -219,7 +229,7 @@ namespace DocumentTests
                         .ThrowsAsync(new Exception("Database failure"));
 
             // Act
-            var result = await _controller.PostDocument(fileMock.Object);
+            var result = await _controller.PostDocument(uploadDto);
 
             // Assert
             Assert.IsInstanceOf<ObjectResult>(result.Result);

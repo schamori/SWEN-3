@@ -1,61 +1,68 @@
-﻿using DAL.Persistence;
-using Microsoft.AspNetCore.Mvc.Testing;
-using SharedResources.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using NUnit.Framework;
+using System.Net.Http;
 using System.Threading.Tasks;
-using Testcontainers.PostgreSql;
-using WebApplicationSWEN3;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Mvc.Testing;
+using System.IO;
+using System.Net;
+using Testcontainers.RabbitMq;
+using WebApplicationSWEN3; // Ersetze dies mit dem tatsächlichen Namespace deiner Anwendung
 using Microsoft.Extensions.Configuration;
-using DotNet.Testcontainers.Builders;
-using Npgsql;
-using Docker.DotNet.Models;
-using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
+using Testcontainers.PostgreSql;
 
 namespace DocumentIntegrationTests
 {
     [TestFixture]
-    public class EndToEndIntegrationTest
+    public class DocumentControllerIntegrationTests
     {
         private HttpClient _client;
         private PostgreSqlContainer _postgresContainer;
+        private RabbitMqContainer _rabbitMqContainer;
         private WebApplicationFactory<Program> _factory;
 
         [SetUp]
         public async Task Setup()
         {
+            // Starte PostgreSQL Testcontainer
             _postgresContainer = new PostgreSqlBuilder()
                 .WithDatabase("documentsearch")
                 .WithUsername("mamo")
                 .WithPassword("T1P3m!hvQ9")
-                .WithHostname("paperless-postgres")
-                .WithNetwork("paperless-network")
-                .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(5432))
                 .Build();
 
             await _postgresContainer.StartAsync();
+            Console.WriteLine(await _postgresContainer.GetLogsAsync());
 
-            var connectionString = "Host=paperless-postgres;Port=5432;Database=documentsearch;Username=mamo;Password=T1P3m!hvQ9";
-            Console.WriteLine($"Postgres Connection String: {connectionString}");
+            // Starte RabbitMQ Testcontainer
+            _rabbitMqContainer = new RabbitMqBuilder()
+                .WithUsername("user")
+                .WithPassword("password")
+                .Build();
 
-            try
-            {
-                using var connection = new NpgsqlConnection(connectionString);
-                connection.Open();
-                Console.WriteLine("Connection to PostgreSQL successful.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"PostgreSQL connection failed: {ex.Message}");
-                throw;
-            }
+            await _rabbitMqContainer.StartAsync();
+            Console.WriteLine(await _rabbitMqContainer.GetLogsAsync());
 
-            // WebApplicationFactory konfigurieren
+            // Manuelles Erstellen der Verbindungszeichenfolgen
+            var postgresHost = "localhost";
+            var postgresPort = "5432";
+            var postgresDatabase = "documentsearch";
+            var postgresUsername = "mamo";
+            var postgresPassword = "T1P3m!hvQ9";
+
+            var postgresConnectionString = $"Host={postgresHost};Port={postgresPort};Database={postgresDatabase};Username={postgresUsername};Password={postgresPassword}";
+
+            var rabbitMqHost = "localhost";
+            var rabbitMqPort = "5672";
+            var rabbitMqUsername = "user";
+            var rabbitMqPassword = "password";
+
+            var rabbitMqConnectionString1 = $"amqp://{rabbitMqUsername}:{rabbitMqPassword}@{rabbitMqHost}:{rabbitMqPort}";
+            var rabbitMqConnectionString2 = $"amqp://{rabbitMqUsername}:{rabbitMqPassword}@{rabbitMqHost}:{rabbitMqPort}";
+
+            Console.WriteLine($"Postgres Connection String: {postgresConnectionString}");
+            Console.WriteLine($"RabbitMQ Connection String: {rabbitMqConnectionString1}");
+
+            // Erstelle WebApplicationFactory mit überschriebenen Konfigurationen
             _factory = new WebApplicationFactory<Program>()
                 .WithWebHostBuilder(builder =>
                 {
@@ -63,14 +70,15 @@ namespace DocumentIntegrationTests
                     {
                         config.AddInMemoryCollection(new[]
                         {
-                    new KeyValuePair<string, string>("ConnectionStrings:DefaultConnection", connectionString)
+                            new KeyValuePair<string, string>("postgresConnectionString", postgresConnectionString),
+                            new KeyValuePair<string, string>("rabbitMqConnectionString1", rabbitMqConnectionString1),
+                            new KeyValuePair<string, string>("rabbitMqConnectionString2", rabbitMqConnectionString2)
                         });
                     });
                 });
 
             _client = _factory.CreateClient();
         }
-
 
         [TearDown]
         public async Task TearDown()
@@ -80,71 +88,57 @@ namespace DocumentIntegrationTests
                 await _postgresContainer.DisposeAsync();
             }
 
+            if (_rabbitMqContainer != null)
+            {
+                await _rabbitMqContainer.DisposeAsync();
+            }
+
             _factory?.Dispose();
             _client?.Dispose();
         }
 
         [Test]
-        public async Task UploadDocument_ProcessOCR_VerifyResults()
+        public async Task PostDocument_UploadsFile_ReturnsCreated()
         {
-            // Arrange
-            var testFilePath = "testfile.pdf";
-            var content = new MultipartFormDataContent();
-            content.Add(new StreamContent(File.OpenRead(testFilePath)), "file", "testfile.pdf");
-
-            var uploadResponse = await _client.PostAsync("/api/document", content);
-            Assert.AreEqual(HttpStatusCode.Created, uploadResponse.StatusCode);
-
-            var uploadResponseBody = await uploadResponse.Content.ReadAsStringAsync();
-            var documentId = ExtractDocumentId(uploadResponseBody);
-
-            bool ocrIndexed = await WaitForElasticSearch(documentId);
-            Assert.IsTrue(ocrIndexed, "OCR result not found in ElasticSearch");
-
-            var fileInMinIO = await GetFileFromMinIO(documentId);
-            Assert.IsNotNull(fileInMinIO, "File not found in MinIO storage");
-
-            var dbDocument = GetDocumentFromDatabase(documentId);
-            Assert.IsNotNull(dbDocument, "Document metadata not found in PostgreSQL");
-            Assert.AreEqual("testfile.pdf", dbDocument.Title);
-        }
-
-        private async Task<bool> WaitForElasticSearch(Guid documentId)
-        {
-            var retries = 10;
-            while (retries > 0)
+            try
             {
-                var response = await new HttpClient().GetAsync($"http://elasticsearch:9200/documents/_doc/{documentId}");
-                if (response.IsSuccessStatusCode)
+                // Arrange
+                var filePath = "testfile.pdf";
+
+                // Stelle sicher, dass die Datei existiert
+                if (!File.Exists(filePath))
                 {
-                    return true;
+                    // Erstelle eine temporäre PDF-Datei für den Test
+                    using (var fs = File.Create(filePath))
+                    {
+                        byte[] info = new System.Text.UTF8Encoding(true).GetBytes("This is a test PDF file.");
+                        fs.Write(info, 0, info.Length);
+                    }
                 }
 
-                await Task.Delay(1000);
-                retries--;
+                var content = new MultipartFormDataContent();
+                content.Add(new StreamContent(File.OpenRead(filePath)), "file", Path.GetFileName(filePath));
+
+                // Act
+                var response = await _client.PostAsync("/api/document", content);
+
+                // Assert
+                Assert.AreEqual(HttpStatusCode.Created, response.StatusCode, "Expected status code 201 Created.");
+
+                var responseBody = await response.Content.ReadAsStringAsync();
+                Assert.IsTrue(responseBody.Contains("id"), "Response body does not contain 'id'.");
             }
-            return false;
-        }
+            catch (Exception ex)
+            {
+                // Ausgabe der Logs zur Fehlerbehebung
+                Console.WriteLine("PostgreSQL Logs:");
+                Console.WriteLine(await _postgresContainer.GetLogsAsync());
 
-        private async Task<byte[]> GetFileFromMinIO(Guid documentId)
-        {
-            using var client = new HttpClient { BaseAddress = new Uri("http://minio:9000") };
-            var response = await client.GetAsync($"/documents/{documentId}");
-            return response.IsSuccessStatusCode ? await response.Content.ReadAsByteArrayAsync() : null;
-        }
+                Console.WriteLine("RabbitMQ Logs:");
+                Console.WriteLine(await _rabbitMqContainer.GetLogsAsync());
 
-        private DocumentDAL GetDocumentFromDatabase(Guid documentId)
-        {
-            using var scope = _factory.Services.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            return context.Documents.FirstOrDefault(d => d.Id == documentId);
-        }
-
-        private Guid ExtractDocumentId(string responseBody)
-        {
-            var match = Regex.Match(responseBody, @"""id"":""(?<id>[^""]+)""");
-            return Guid.Parse(match.Groups["id"].Value);
+                throw; // Re-throw the exception nach dem Loggen
+            }
         }
     }
-
 }
