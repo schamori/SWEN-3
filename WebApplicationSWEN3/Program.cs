@@ -5,14 +5,15 @@ using FluentValidation.AspNetCore;
 using BL.Validators;
 using SharedResources.Mappers;
 using RabbitMq.QueueLibrary;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using BL.Services;
 using FileStorageService.Controllers;
 using Minio;
 using ElasticSearch;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.OpenApi.Models;
+using WebApplicationSWEN3;
+
+
 namespace WebApplicationSWEN3
 {
     public class Program
@@ -26,7 +27,8 @@ namespace WebApplicationSWEN3
                 .Build();
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllers().AddFluentValidation(fv =>
+            builder.Services.AddControllers()
+                .AddFluentValidation(fv =>
                 fv.RegisterValidatorsFromAssemblyContaining<DocumentValidator>());
 
 
@@ -72,7 +74,21 @@ namespace WebApplicationSWEN3
             builder.Services.AddScoped<IFilesApi, FilesApi>();
 
 
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "WebApplicationSWEN3 API",
+                    Version = "v1",
+                    Description = "API-Dokumentation für WebApplicationSWEN3"
+                });
+                // Fügen Sie den OperationFilter hinzu
+                c.OperationFilter<FileUploadOperationFilter>();
+
+            });
+
+
             // Configure CORS to allow requests from all origins
             builder.Services.AddCors(options =>
             {
@@ -96,11 +112,6 @@ namespace WebApplicationSWEN3
 
 
             builder.Services.AddScoped<DocumentRepo>();
-            // Add services to the container.
-            builder.Services.AddControllers();
-
-
-            builder.Services.AddEndpointsApiExplorer();
 
             var app = builder.Build();
 
@@ -113,13 +124,13 @@ namespace WebApplicationSWEN3
                 dbContext.Database.Migrate(); 
             }
 
-
-
-            if (app.Environment.IsDevelopment())
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebApplicationSWEN3 API v1");
+                c.RoutePrefix = "swagger"; // Swagger UI unter /swagger verfügbar
+            });
+
 
             app.UseHttpsRedirection();
 
