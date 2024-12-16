@@ -15,6 +15,9 @@ using Moq;
 using NUnit.Framework;
 using Minio.DataModel.Response;
 using System.Net;
+using Microsoft.Extensions.Logging;
+using NUnit.Framework.Internal;
+using BL.Services;
 
 namespace DocumentTests
 {
@@ -24,6 +27,7 @@ namespace DocumentTests
         private Mock<IMinioClient> _minioClientMock;
         private IOptions<FileStorageServiceOptions> _options;
         private FilesApi _filesApi;
+        private Mock<ILogger<FilesApi>> _loggerMock;
 
         [SetUp]
         public void SetUp()
@@ -33,12 +37,13 @@ namespace DocumentTests
             {
                 BucketName = "test-bucket"
             });
+            _loggerMock = new Mock<ILogger<FilesApi>>();
 
-            _filesApi = new FilesApi(_minioClientMock.Object, _options);
+            _filesApi = new FilesApi(_minioClientMock.Object, _options, _loggerMock.Object);
         }
 
         #region UploadAsync Tests
-
+        
         [Test]
         public async Task UploadAsync_BucketExists_ShouldPutObject()
         {

@@ -68,7 +68,7 @@ namespace DocumentIntegrationTests
             Assert.That(uploadResult.Id, Is.Not.Empty);
 
             // Act - Search
-            var searchResponse = await _client.GetAsync("/api/document/search?query=Cambridge");
+            var searchResponse = await _client.GetAsync("/api/document/search?query=hello");
             Assert.That(searchResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
             // Act - Download
