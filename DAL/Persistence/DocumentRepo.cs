@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SharedResources.Entities;
+using DAL.Exceptions;
+using AutoMapper;
 
 namespace DAL.Persistence
 {
@@ -29,7 +30,7 @@ namespace DAL.Persistence
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while fetching documents.");
-                throw;
+                throw new DataAccessException("Fehler beim Abrufen der Dokumente aus der Datenbank.", ex);
             }
         }
 
@@ -49,7 +50,7 @@ namespace DAL.Persistence
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while creating the document.");
-                throw;
+                throw new DataAccessException("Fehler beim Erstellen des Dokuments in der Datenbank.", ex);
             }
         }
 
@@ -71,7 +72,7 @@ namespace DAL.Persistence
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while fetching the document with ID: {id}");
-                throw;
+                throw new DataAccessException($"Fehler beim Abrufen des Dokuments mit ID: {id}.", ex);
             }
         }
 
@@ -98,7 +99,7 @@ namespace DAL.Persistence
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while updating the document with ID: {document.Id}");
-                throw;
+                throw new DataAccessException($"Fehler beim Aktualisieren des Dokuments mit ID: {document.Id}.", ex);
             }
         }
 
@@ -122,7 +123,7 @@ namespace DAL.Persistence
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while deleting the document with ID: {id}");
-                throw;
+                throw new DataAccessException($"Fehler beim Löschen des Dokuments mit ID: {id}.", ex);
             }
         }
     }

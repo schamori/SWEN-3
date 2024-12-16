@@ -35,21 +35,27 @@ namespace TesseractOcr
             {
                 var fileName = eventArgs.Content; // URL vom Consumer
                 var messageId = eventArgs.MessageId;
+                try
+                {
+                    _logger.LogInformation($"QueueService with url {fileName}");
 
-                _logger.LogInformation($"QueueService with url {fileName}");
+                    byte[] fileStream = await _filesApi.DownloadFromMinioAsync("documents", messageId.ToString());
+                    _logger.LogInformation($"Downloaded stream length: {fileStream.Length}");
+                    _logger.LogInformation($"File {fileName} successfully downloaded from MinIO.");
 
-                byte[] fileStream = await _filesApi.DownloadFromMinioAsync("documents", messageId.ToString());
-                _logger.LogInformation($"Downloaded stream length: {fileStream.Length}");
-                _logger.LogInformation($"File {fileName} successfully downloaded from MinIO.");
+                    var extractedText = await _ocrClient.OcrPdf(fileStream);
+                    _searchIndex.AddDocumentAsync(new DocumentOcr { Id = messageId, Title = fileName, Content = extractedText });
 
-                var extractedText = await _ocrClient.OcrPdf(fileStream);
-                _searchIndex.AddDocumentAsync(new DocumentOcr { Id = messageId, Title = fileName, Content = extractedText });
+                    _logger.LogInformation($"OCR completed for file: {fileName}");
 
-                _logger.LogInformation($"OCR completed for file: {fileName}");
-
-                // Ergebnis verarbeiten oder speichern
-                _queueProducer.Send(extractedText, messageId);
-                _logger.LogInformation($"Extracted text {extractedText} sent to producer with MessageId: {messageId}");
+                    // Ergebnis verarbeiten oder speichern
+                    _queueProducer.Send(extractedText, messageId);
+                    _logger.LogInformation($"Extracted text {extractedText} sent to producer with MessageId: {messageId}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Error while working on {fileName} with the MessageId: {messageId}.");
+                }
             };
 
             _queueConsumer.StartReceive();
@@ -58,7 +64,7 @@ namespace TesseractOcr
 
             Console.CancelKeyPress += (sender, e) =>
             {
-                e.Cancel = true; // Prevent immediate termination
+                e.Cancel = true;
                 cancellationTokenSource.Cancel();
             };
 

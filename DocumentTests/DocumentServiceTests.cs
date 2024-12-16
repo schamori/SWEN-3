@@ -13,6 +13,8 @@ using System.Text;
 using ElasticSearch;
 using Microsoft.OpenApi.Services;
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Interfaces;
+using Microsoft.Extensions.Logging;
+using BL.Exceptions;
 
 namespace DocumentTests
 {
@@ -26,6 +28,7 @@ namespace DocumentTests
         private Mock<IFilesApi> _filesApi;
         private DocumentService _service;
         private Mock<ISearchIndex> _searchIndex;
+        private Mock<ILogger<DocumentService>> _loggerMock;
 
         [SetUp]
         public void SetUp()
@@ -36,7 +39,8 @@ namespace DocumentTests
             _mockQueueConsumer = new Mock<IQueueConsumer>();
             _filesApi = new Mock<IFilesApi>();
             _searchIndex = new Mock<ISearchIndex>();
-            _service = new DocumentService(_mockRepo.Object, _mockMapper.Object, _mockQueueProducer.Object, _mockQueueConsumer.Object, _filesApi.Object, _searchIndex.Object);
+            _loggerMock = new Mock<ILogger<DocumentService>>();
+            _service = new DocumentService(_mockRepo.Object, _mockMapper.Object, _mockQueueProducer.Object, _mockQueueConsumer.Object, _filesApi.Object, _searchIndex.Object, _loggerMock.Object);
         }
 
 
@@ -123,16 +127,16 @@ namespace DocumentTests
                 It.IsAny<Stream>(),
                 It.IsAny<string>(),
                 It.IsAny<string>()))
-                .ThrowsAsync(new Exception("Upload failed"))
+                .ThrowsAsync(new BusinessLogicException("Upload failed"))
                 .Verifiable();
 
             // Act & Assert
-            var ex = Assert.ThrowsAsync<Exception>(async () =>
+            var ex = Assert.ThrowsAsync<BusinessLogicException>(async () =>
                 await _service.CreateDocument(documentDto, fileStream, contentType)
             );
 
             Assert.IsNotNull(ex);
-            Assert.AreEqual("Upload failed", ex.Message);
+            Assert.AreEqual($"Unerwarteter Fehler beim Erstellen des Dokuments mit ID: {documentDto.Id}.", ex.Message);
 
             // Verifikation der erwarteten Aufrufe
             _filesApi.Verify(f => f.UploadAsync(fileStream, documentDto.Id.ToString(), contentType), Times.Once);
@@ -396,15 +400,15 @@ namespace DocumentTests
             var documentId = Guid.NewGuid();
 
             _filesApi.Setup(f => f.DownloadFromMinioAsync("documents", documentId.ToString()))
-                     .ThrowsAsync(new Exception("Download failed"));
+                     .ThrowsAsync(new BusinessLogicException("Download failed"));
 
             // Act & Assert
-            var ex = Assert.ThrowsAsync<Exception>(async () =>
+            var ex = Assert.ThrowsAsync<BusinessLogicException>(async () =>
                 await _service.GetDocumentFile(documentId)
             );
 
             Assert.IsNotNull(ex);
-            Assert.AreEqual("Download failed", ex.Message);
+            Assert.AreEqual($"Fehler beim Herunterladen der Datei für Dokument ID: {documentId}.", ex.Message);
 
             _filesApi.Verify(f => f.DownloadFromMinioAsync("documents", documentId.ToString()), Times.Once);
         }
